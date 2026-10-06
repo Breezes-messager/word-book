@@ -16,8 +16,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // 发新版本时：versionCode 每次 +1（商店 / 安装升级用），versionName 用语义化版本号
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 词库导入时需要较大的游标窗口
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
@@ -51,6 +51,8 @@ android {
 
     buildFeatures {
         compose = true
+        // 设置页要显示真实版本号；gradle.properties 里全局默认关掉了 buildConfig，这里单独打开
+        buildConfig = true
     }
 
     // assets 里的 .db 必须保持未压缩：AssetImporter 用 openFd() 读取体积，

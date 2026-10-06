@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wordbook.BuildConfig
 import com.wordbook.domain.model.ArticleStyle
 import kotlin.math.roundToInt
 
@@ -234,8 +235,15 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.height(24.dp))
+        // 版本号必须从构建产物里读，不要写死字符串：
+        // 之前这里硬编码了 "v1.0"，结果 APK 已经发到 1.0.2 了，界面上还显示 v1.0
         Text(
-            text = "背单词 v1.0 · 个人自用 · 数据全部保存在本机",
+            text = "背单词 v" + BuildConfig.VERSION_NAME + "（build " + BuildConfig.VERSION_CODE + "）",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = "个人自用 · 数据全部保存在本机 · 词库 5046 词",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
