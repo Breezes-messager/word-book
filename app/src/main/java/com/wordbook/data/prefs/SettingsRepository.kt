@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.wordbook.domain.model.AppSettings
 import com.wordbook.domain.model.ArticleStyle
+import com.wordbook.domain.model.UiStyle
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -38,6 +39,7 @@ class SettingsRepository @Inject constructor(
         val reminderMinute = intPreferencesKey("reminder_minute")
         val desiredRetention = floatPreferencesKey("desired_retention")
         val translationExpanded = booleanPreferencesKey("translation_expanded")
+        val uiStyle = stringPreferencesKey("ui_style")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -52,6 +54,7 @@ class SettingsRepository @Inject constructor(
             reminderMinute = prefs[Keys.reminderMinute] ?: 0,
             desiredRetention = prefs[Keys.desiredRetention] ?: 0.9f,
             translationExpanded = prefs[Keys.translationExpanded] ?: false,
+            uiStyle = UiStyle.fromName(prefs[Keys.uiStyle]),
         )
     }
 
@@ -69,6 +72,8 @@ class SettingsRepository @Inject constructor(
     }
     suspend fun setDesiredRetention(value: Float) = context.dataStore.edit { it[Keys.desiredRetention] = value.coerceIn(0.7f, 0.98f) }
     suspend fun setTranslationExpanded(value: Boolean) = context.dataStore.edit { it[Keys.translationExpanded] = value }
+
+    suspend fun setUiStyle(style: UiStyle) = context.dataStore.edit { it[Keys.uiStyle] = style.name }
 
     /** 清空全部设置（含 API Key），用于“清空全部数据” */
     suspend fun clearAll() {

@@ -1,5 +1,6 @@
 package com.wordbook.ui.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -8,8 +9,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import com.wordbook.domain.model.UiStyle
 
 private val LightColors = lightColorScheme(
     primary = GreenPrimary,
@@ -47,22 +53,50 @@ private val DarkColors = darkColorScheme(
     error = Color(0xFFFFB4AB),
 )
 
+/**
+ * 主题入口。风格由「设置 → 界面风格」决定，切换后立即生效：
+ *  - SYSTEM：Material You 动态取色，跟随系统深浅色
+ *  - INK / MIDNIGHT / MINT / MARKER：四套固定外观（颜色 / 圆角 / 字体 / 卡片样式都不同）
+ *
+ * 组件通过 [LocalAppStyle] 读取风格令牌（卡片描边、进度条、评分按钮、高亮等）。
+ */
 @Composable
 fun WordBookTheme(
+    style: UiStyle = UiStyle.SYSTEM,
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val colorScheme = when {
+    val definition = definitionOf(style)
+    val effectiveDark = definition.forceDark || (definition.scheme == null && darkTheme)
+
+    val colorScheme = definition.scheme ?: when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         darkTheme -> DarkColors
         else -> LightColors
     }
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = WordBookTypography,
-        content = content,
-    )
+
+    // 深色外观下状态栏 / 导航栏图标要转成浅色，否则看不见
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            runCatching {
+                val window = (view.context as Activity).window
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !effectiveDark
+                controller.isAppearanceLightNavigationBars = !effectiveDark
+            }
+        }
+    }
+
+    CompositionLocalProvider(LocalAppStyle provides definition.tokens) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = definition.shapes,
+            typography = definition.typography,
+            content = content,
+        )
+    }
 }

@@ -4,7 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wordbook.ui.WordBookNavHost
+import com.wordbook.ui.theme.ThemeViewModel
 import com.wordbook.ui.theme.WordBookTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -14,7 +18,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            WordBookTheme {
+            // 界面风格从设置里读，改完立即生效（不用重启）
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val style by themeViewModel.style.collectAsStateWithLifecycle()
+            WordBookTheme(style = style) {
                 WordBookNavHost()
             }
         }

@@ -30,7 +30,7 @@
 | 复习日志 | 每次复习都落库：评分 / 时间 / 复习前 state·stability·difficulty / 复习后 state·stability·difficulty / 间隔 / 用时 |
 | 每日文章 | DeepSeek Chat Completions，`response_format: json_object`，失败重试一次，成功后立刻落盘；断网显示上一次缓存 |
 | 点击查词 | 完全离线，精确 → ECDICT exchange 词形还原（running→run）→ 前缀候选 → 未收录；LRU 缓存 |
-| 设置 | 每日新词数、每日复习上限、顺序/乱序、文章风格、API Key（带显示/隐藏 + 测试连接）、提醒开关与时间、目标保持率 |
+| 设置 | **界面风格（5 选 1，即时生效）**、每日新词数、每日复习上限、顺序/乱序、文章风格、API Key（带显示/隐藏 + 测试连接）、提醒开关与时间、目标保持率 |
 | 统计 | 累计学词、连续打卡、今日完成、30 天打卡条、卡片状态分布、最近文章 |
 | 提醒 | WorkManager + 本地通知，默认 20:00，可开关 |
 | 数据 | 导出 JSON（可分享）、清空全部数据 |
@@ -337,6 +337,32 @@ I okhttp.OkHttpClient: <-- 422 https://api.deepseek.com/chat/completions (259ms,
 
 真实生成也验证过了：5 个刚学的词 → `POST /chat/completions (1432-byte body) → 200`，
 返回 4 段 158 词的小故事，5 个目标词全部自然出现，`occurrences` 列出的 14 个实际形态在正文中都能找到。
+
+---
+
+## 十点五、界面风格（5 选 1）
+
+「设置 → 界面风格」可以随时切换，**点一下立即生效**，不用重启。
+
+![五套风格真机对比](docs/style-samples/compare.png)
+
+| 选项 | 外观 | 关键差异 |
+|------|------|----------|
+| 跟随系统 | Material You 动态取色 | 支持深色模式（默认） |
+| 墨纸 | 米白纸感 + 朱红 | 宋体标题、直角卡片、1px 细线、下划线式高亮、细线进度条 |
+| 暗夜专注 | 近黑 + 薄荷荧光 | 巨型单词、字距拉开的标题、描边评分按钮、固定深色 |
+| 薄荷圆润 | 奶油白 + 薄荷绿 | 大圆角卡片、柔和阴影、胶囊按钮、色块式高亮 |
+| 马克笔 | 纯白 + 荧光黄 | 粗黑描边、偏移硬阴影、荧光黄标题框、马克笔式高亮 |
+
+**实现方式**（加风格不用改页面代码）：
+
+- `ui/theme/AppStyles.kt` —— 一套 `AppStyleTokens`（卡片圆角/描边/硬阴影、进度条、评分按钮、
+  高亮样式、字体族、区块标题处理方式），以及 5 套 ColorScheme / Shapes / Typography
+- `ui/components/StyleComponents.kt` —— `StyleCard` / `StyleProgress` / `StyleRatingRow` / `StyleSectionTitle`
+- 组件通过 `CompositionLocal(LocalAppStyle)` 读令牌；风格存在 DataStore，`MainActivity` 观察它
+
+设计样板（HTML 稿，含各风格的完整设计说明）：[docs/style-samples/](docs/style-samples/)，
+重新生成：`bash tools/verify/render_style_mockups.sh`
 
 ---
 

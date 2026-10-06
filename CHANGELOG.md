@@ -1,5 +1,33 @@
 # 更新日志
 
+## v1.1.0 — 2026-10-06
+
+### 新增：四套界面风格，可在 App 内随时切换
+
+「设置 → 界面风格」新增 5 个选项，**点一下立即生效**（不用重启）：
+
+| 选项 | 外观 | 特点 |
+|------|------|------|
+| 跟随系统 | Material You 动态取色 | 支持深色模式（原来的样子，默认） |
+| 墨纸 | 米白纸感 + 朱红 | 宋体标题、直角卡片、1px 细线、下划线高亮 |
+| 暗夜专注 | 近黑 + 薄荷荧光 | 巨型单词、细发光进度条、描边评分按钮、固定深色 |
+| 薄荷圆润 | 奶油白 + 薄荷绿 | 大圆角卡片、柔和阴影、胶囊按钮、色块高亮 |
+| 马克笔 | 纯白 + 荧光黄 | 粗黑描边、硬阴影、黄框标题、马克笔高亮 |
+
+实现方式（不是简单换色，是「风格令牌」架构）：
+
+- `ui/theme/AppStyles.kt`：一套 `AppStyleTokens`（卡片圆角/描边/硬阴影、进度条、评分按钮、
+  高亮样式、字体族、区块标题处理方式）+ 5 套 ColorScheme / Shapes / Typography
+- `ui/components/StyleComponents.kt`：`StyleCard` / `StyleProgress` / `StyleRatingRow` / `StyleSectionTitle`
+- 组件通过 `CompositionLocal(LocalAppStyle)` 读取令牌，所以加风格不用改页面代码
+- 设置存在 DataStore，`MainActivity` 观察它，切换后整棵树重组
+
+### 验证
+
+- 5 套风格全部在 Android 14 模拟器上跑通，逐套截图对比：`docs/style-samples/compare.png`
+- 设计样板（HTML 稿）：`docs/style-samples/style-*.png`
+- 深色风格下状态栏/导航栏图标会自动转浅色
+
 ## v1.0.4 — 2026-10-06
 
 ### 改进

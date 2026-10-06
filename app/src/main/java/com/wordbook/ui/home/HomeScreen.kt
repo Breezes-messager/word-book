@@ -14,12 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -33,6 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wordbook.ui.components.StyleCard
+import com.wordbook.ui.components.StyleProgress
+import com.wordbook.ui.components.StyleSectionTitle
 import com.wordbook.ui.components.WordRow
 import com.wordbook.util.rememberSpeaker
 
@@ -91,12 +91,11 @@ fun HomeScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 state.latestArticle?.let { article ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    StyleCard(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         onClick = onOpenArticle,
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column {
                             Text("最近生成的文章", style = MaterialTheme.typography.labelLarge)
                             Spacer(Modifier.height(4.dp))
                             Text(
@@ -117,7 +116,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("词书预览（前 20 个词）", style = MaterialTheme.typography.titleLarge)
+                    StyleSectionTitle("词书预览（前 20 个词）")
                     TextButton(onClick = onOpenWordList) { Text("查看全部") }
                 }
             }
@@ -144,27 +143,23 @@ private fun TodayTaskCard(
     onStartReview: () -> Unit,
     onOpenArticle: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("今日任务", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+    StyleCard {
+        Column {
+            StyleSectionTitle("今日任务")
             Spacer(Modifier.height(12.dp))
 
             Text("新词 " + newDone + " / " + newTarget, style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
-            LinearProgressIndicator(
-                progress = { if (newTarget <= 0) 0f else (newDone.toFloat() / newTarget).coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            StyleProgress(progress = if (newTarget <= 0) 0f else (newDone.toFloat() / newTarget).coerceIn(0f, 1f))
             Spacer(Modifier.height(12.dp))
 
             Text("待复习 " + reviewDue + " 个（今日已复习 " + reviewDone + "）", style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
-            LinearProgressIndicator(
-                progress = {
+            StyleProgress(
+                progress = run {
                     val total = (reviewDue + reviewDone).toFloat()
                     if (total <= 0f) 0f else (reviewDone.toFloat() / total).coerceIn(0f, 1f)
                 },
-                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(Modifier.height(8.dp))

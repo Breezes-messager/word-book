@@ -9,6 +9,7 @@ import com.wordbook.data.repo.StatsRepository
 import com.wordbook.data.repo.StudyRepository
 import com.wordbook.domain.model.AppSettings
 import com.wordbook.domain.model.ArticleStyle
+import com.wordbook.domain.model.UiStyle
 import com.wordbook.util.DataExporter
 import com.wordbook.work.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -101,6 +102,11 @@ class SettingsViewModel @Inject constructor(
 
     fun setDesiredRetention(value: Float) {
         viewModelScope.launch { settingsRepository.setDesiredRetention(value) }
+    }
+
+    /** 切换界面风格，立即生效（主题层直接观察 DataStore） */
+    fun setUiStyle(style: UiStyle) {
+        viewModelScope.launch { settingsRepository.setUiStyle(style) }
     }
 
     fun onApiKeyChange(value: String) = _state.update { it.copy(apiKeyInput = value, testResult = null) }

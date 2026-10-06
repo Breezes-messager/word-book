@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import com.wordbook.domain.lemmatize.WordNormalizer
+import com.wordbook.ui.theme.LocalAppStyle
 
 private val wordRegex = Regex("" + "[A-Za-z][A-Za-z'’-]*")
 
@@ -31,10 +32,15 @@ fun ArticleParagraph(
     onWordClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tokens = LocalAppStyle.current
+    val highlighted = tokens.highlightText ?: MaterialTheme.colorScheme.primary
+    val background = tokens.highlightBackground
     val highlightStyle = SpanStyle(
-        color = MaterialTheme.colorScheme.primary,
+        color = highlighted,
+        background = background ?: androidx.compose.ui.graphics.Color.Unspecified,
         fontWeight = FontWeight.Bold,
-        textDecoration = TextDecoration.Underline,
+        // 有底色（薄荷 / 马克笔）时不需要下划线，纸感风格用下划线代替底色
+        textDecoration = if (background == null) TextDecoration.Underline else TextDecoration.None,
     )
 
     val prepared = remember(text, highlights) {

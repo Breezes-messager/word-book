@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,21 +23,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.wordbook.domain.fsrs.Rating
 import com.wordbook.ui.components.StudyCardView
-import com.wordbook.util.formatInterval
+import com.wordbook.ui.components.StyleRatingRow
 import com.wordbook.util.rememberSpeaker
 
 /**
  * 学习 / 复习共用的界面。
  * NEW 模式：正面单词音标 → 翻面看释义 → 四档评分
- * REVIEW 模式：先只看单词，回忆后点“显示答案”，再四档评分
+ * REVIEW 模式：先只看单词，回忆后点「显示答案」，再四档评分
  */
 @Composable
 fun StudyScreen(
@@ -52,7 +48,6 @@ fun StudyScreen(
     LaunchedEffect(mode) { viewModel.start(mode) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // 顶部：进度 + 退出
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -104,7 +99,11 @@ fun StudyScreen(
 
                 Spacer(Modifier.height(12.dp))
                 if (state.flipped) {
-                    RatingRow(previews = state.previews, onRate = viewModel::rate)
+                    StyleRatingRow(
+                        previews = state.previews,
+                        onRate = viewModel::rate,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
                 } else {
                     val isReview = mode == SessionMode.REVIEW
                     Button(
@@ -117,49 +116,6 @@ fun StudyScreen(
                     }
                 }
                 Spacer(Modifier.height(20.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun RatingRow(previews: Map<Rating, Long>, onRate: (Rating) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        RatingButton("重来", Rating.AGAIN, Color(0xFFD1495B), previews[Rating.AGAIN], onRate, Modifier.weight(1f))
-        RatingButton("困难", Rating.HARD, Color(0xFFE08A3C), previews[Rating.HARD], onRate, Modifier.weight(1f))
-        RatingButton("良好", Rating.GOOD, Color(0xFF2E8B6E), previews[Rating.GOOD], onRate, Modifier.weight(1f))
-        RatingButton("简单", Rating.EASY, Color(0xFF3A78C2), previews[Rating.EASY], onRate, Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun RatingButton(
-    label: String,
-    rating: Rating,
-    color: Color,
-    intervalMs: Long?,
-    onRate: (Rating) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = { onRate(rating) },
-        modifier = modifier.height(60.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Color.White),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp),
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(label, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            if (intervalMs != null) {
-                Text(
-                    text = formatInterval(intervalMs),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
             }
         }
     }

@@ -15,10 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -40,6 +42,7 @@ import com.wordbook.data.db.WordEntity
 import com.wordbook.data.repo.examples
 import com.wordbook.data.repo.phrases
 import com.wordbook.data.repo.translationLines
+import com.wordbook.ui.theme.LocalAppStyle
 
 /**
  * 学习卡片：
@@ -64,7 +67,10 @@ fun StudyCardView(
     var dragAccum by remember(word.id) { mutableFloatStateOf(0f) }
     val threshold = with(LocalDensity.current) { 90.dp.toPx() }
 
-    Card(
+    val tokens = LocalAppStyle.current
+    val shape = RoundedCornerShape(tokens.cardCorner.dp)
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer {
@@ -80,8 +86,10 @@ fun StudyCardView(
                     onHorizontalDrag = { _, delta -> dragAccum += delta },
                 )
             }
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .then(if (tokens.cardBorder != null) Modifier.border(tokens.cardBorder, shape) else Modifier)
             .clickable { onFlip() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         // 背面内容需要再翻 180 度，否则文字是镜像的
         Box(
@@ -110,6 +118,7 @@ private fun FrontContent(word: WordEntity, onSpeak: (String) -> Unit, hint: Stri
         Text(
             text = word.headword,
             style = MaterialTheme.typography.displaySmall,
+            fontFamily = LocalAppStyle.current.wordFont,
             fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(8.dp))
@@ -140,7 +149,12 @@ private fun BackContent(word: WordEntity, onSpeak: (String) -> Unit) {
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
     ) {
-        Text(text = word.headword, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(
+            text = word.headword,
+            style = MaterialTheme.typography.headlineMedium,
+            fontFamily = LocalAppStyle.current.wordFont,
+            fontWeight = FontWeight.Bold,
+        )
         val phonetic = word.phoneticUs ?: word.phoneticUk
         if (!phonetic.isNullOrBlank()) {
             Text(text = "/" + phonetic + "/", style = MaterialTheme.typography.bodyMedium)

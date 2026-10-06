@@ -30,4 +30,6 @@ data class AppSettings(
     val desiredRetention: Float = 0.9f,
     /** 文章页默认展开中文翻译 */
     val translationExpanded: Boolean = false,
+    /** 界面风格（切换后立即生效） */
+    val uiStyle: UiStyle = UiStyle.SYSTEM,
 )
