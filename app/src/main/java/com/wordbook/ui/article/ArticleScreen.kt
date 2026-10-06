@@ -20,6 +20,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,8 +41,12 @@ import com.wordbook.domain.lemmatize.WordNormalizer
 import com.wordbook.ui.components.ArticleParagraph
 import com.wordbook.ui.dict.DictBottomSheet
 import com.wordbook.ui.dict.DictSheetViewModel
+import com.wordbook.ui.theme.articleBodyStyle
+import com.wordbook.ui.theme.articleSecondaryStyle
+import com.wordbook.ui.theme.readingTitleStyle
 import com.wordbook.util.rememberSpeaker
 import java.time.Instant
+import kotlin.math.roundToInt
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -96,6 +101,15 @@ fun ArticleScreen(
             Spacer(Modifier.height(8.dp))
             Text(notice, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
         }
+
+        // 阅读调节：读文章时随手就能调，不用退回设置页
+        Spacer(Modifier.height(10.dp))
+        ReadingAdjuster(
+            fontScale = state.fontScale,
+            lineHeightScale = state.lineHeightScale,
+            onFontScale = viewModel::setFontScale,
+            onLineHeightScale = viewModel::setLineHeightScale,
+        )
         state.error?.let { error ->
             Spacer(Modifier.height(8.dp))
             Text(error, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
@@ -126,6 +140,8 @@ fun ArticleScreen(
                     translationExpanded = translationExpanded,
                     onToggleTranslation = { translationExpanded = !translationExpanded },
                     onWordClick = dictViewModel::lookup,
+                    fontScale = state.fontScale,
+                    lineHeightScale = state.lineHeightScale,
                 )
                 Spacer(Modifier.height(12.dp))
                 HorizontalDivider()
@@ -212,12 +228,56 @@ private fun GenerationCard(
     }
 }
 
+/** 字号 / 行距的快捷调节条 */
+@Composable
+private fun ReadingAdjuster(
+    fontScale: Float,
+    lineHeightScale: Float,
+    onFontScale: (Float) -> Unit,
+    onLineHeightScale: (Float) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = "阅读",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SmallStepButton("A−") { onFontScale(fontScale - 0.05f) }
+        Text(
+            text = (fontScale * 100).roundToInt().toString() + "%",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SmallStepButton("A+") { onFontScale(fontScale + 0.05f) }
+        Spacer(Modifier.width(8.dp))
+        SmallStepButton("行距−") { onLineHeightScale(lineHeightScale - 0.05f) }
+        SmallStepButton("行距+") { onLineHeightScale(lineHeightScale + 0.05f) }
+    }
+}
+
+@Composable
+private fun SmallStepButton(label: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+        modifier = Modifier.height(34.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
 @Composable
 private fun ArticleBody(
     content: ArticleContent,
     translationExpanded: Boolean,
     onToggleTranslation: () -> Unit,
     onWordClick: (String) -> Unit,
+    fontScale: Float,
+    lineHeightScale: Float,
 ) {
     val highlights = remember(content) {
         buildSet {
@@ -228,11 +288,15 @@ private fun ArticleBody(
         }
     }
 
-    Text(text = content.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    Text(
+        text = content.title,
+        style = readingTitleStyle(MaterialTheme.typography.titleLarge, fontScale),
+        fontWeight = FontWeight.Bold,
+    )
     if (content.titleCn.isNotBlank()) {
         Text(
             text = content.titleCn,
-            style = MaterialTheme.typography.bodyMedium,
+            style = articleSecondaryStyle(fontScale, lineHeightScale),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -244,12 +308,13 @@ private fun ArticleBody(
             highlights = highlights,
             onWordClick = onWordClick,
             modifier = Modifier.fillMaxWidth(),
+            style = articleBodyStyle(fontScale, lineHeightScale),
         )
         Spacer(Modifier.height(12.dp))
         if (translationExpanded && index < content.translation.size) {
             Text(
                 text = content.translation[index],
-                style = MaterialTheme.typography.bodyMedium,
+                style = articleSecondaryStyle(fontScale, lineHeightScale),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))

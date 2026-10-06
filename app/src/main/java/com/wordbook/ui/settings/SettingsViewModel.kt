@@ -117,6 +117,16 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setDarkMode(mode) }
     }
 
+    /** 文章正文字号（设置页里有实时预览） */
+    fun setArticleFontScale(scale: Float) {
+        viewModelScope.launch { settingsRepository.setArticleFontScale(scale) }
+    }
+
+    /** 文章行距 */
+    fun setArticleLineHeightScale(scale: Float) {
+        viewModelScope.launch { settingsRepository.setArticleLineHeightScale(scale) }
+    }
+
     fun onApiKeyChange(value: String) = _state.update { it.copy(apiKeyInput = value, testResult = null) }
 
     fun toggleApiKeyVisible() = _state.update { it.copy(apiKeyVisible = !it.apiKeyVisible) }

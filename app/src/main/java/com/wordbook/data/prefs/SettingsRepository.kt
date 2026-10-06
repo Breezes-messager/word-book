@@ -42,6 +42,8 @@ class SettingsRepository @Inject constructor(
         val translationExpanded = booleanPreferencesKey("translation_expanded")
         val uiStyle = stringPreferencesKey("ui_style")
         val darkMode = stringPreferencesKey("dark_mode")
+        val articleFontScale = floatPreferencesKey("article_font_scale")
+        val articleLineHeightScale = floatPreferencesKey("article_line_height_scale")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -58,6 +60,8 @@ class SettingsRepository @Inject constructor(
             translationExpanded = prefs[Keys.translationExpanded] ?: false,
             uiStyle = UiStyle.fromName(prefs[Keys.uiStyle]),
             darkMode = DarkModeSetting.fromName(prefs[Keys.darkMode]),
+            articleFontScale = prefs[Keys.articleFontScale] ?: 1.0f,
+            articleLineHeightScale = prefs[Keys.articleLineHeightScale] ?: 1.0f,
         )
     }
 
@@ -79,6 +83,16 @@ class SettingsRepository @Inject constructor(
     suspend fun setUiStyle(style: UiStyle) = context.dataStore.edit { it[Keys.uiStyle] = style.name }
 
     suspend fun setDarkMode(mode: DarkModeSetting) = context.dataStore.edit { it[Keys.darkMode] = mode.name }
+
+    /** 文章正文字号倍率 */
+    suspend fun setArticleFontScale(scale: Float) = context.dataStore.edit {
+        it[Keys.articleFontScale] = scale.coerceIn(0.85f, 1.6f)
+    }
+
+    /** 文章行距倍率 */
+    suspend fun setArticleLineHeightScale(scale: Float) = context.dataStore.edit {
+        it[Keys.articleLineHeightScale] = scale.coerceIn(1.0f, 1.9f)
+    }
 
     /** 清空全部设置（含 API Key），用于“清空全部数据” */
     suspend fun clearAll() {

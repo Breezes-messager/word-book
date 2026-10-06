@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -31,6 +32,7 @@ fun ArticleParagraph(
     highlights: Set<String>,
     onWordClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.bodyLarge,
 ) {
     val tokens = LocalAppStyle.current
     val highlighted = tokens.highlightText ?: MaterialTheme.colorScheme.primary
@@ -69,7 +71,7 @@ fun ArticleParagraph(
 
     Text(
         text = annotated,
-        style = MaterialTheme.typography.bodyLarge,
+        style = style,
         onTextLayout = { layout = it },
         modifier = modifier.pointerInput(text, ranges) {
             detectTapGestures { position ->

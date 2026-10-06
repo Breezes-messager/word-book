@@ -38,6 +38,8 @@ data class ArticleUiState(
     val progressText: String? = null,
     val notice: String? = null,
     val error: String? = null,
+    val fontScale: Float = 1.0f,
+    val lineHeightScale: Float = 1.0f,
 ) {
     val canGenerate: Boolean get() = todayWordCount >= ArticlePlan.MIN_WORDS
     val hasTodayArticle: Boolean get() = todayArticles.isNotEmpty()
@@ -71,6 +73,8 @@ class ArticleViewModel @Inject constructor(
                     hasApiKey = settings.apiKey.isNotBlank(),
                     todayArticles = today,
                     style = settings.articleStyle.label,
+                    fontScale = settings.articleFontScale,
+                    lineHeightScale = settings.articleLineHeightScale,
                 )
 
                 if (today.isNotEmpty()) {
@@ -183,6 +187,20 @@ class ArticleViewModel @Inject constructor(
             runCatching { articleRepository.saveManual(SampleArticle.content, "示例") }
             load()
         }
+    }
+
+    /** 调正文字号：先改界面（立即生效），再落盘 */
+    fun setFontScale(scale: Float) {
+        val clamped = scale.coerceIn(0.85f, 1.6f)
+        _state.update { it.copy(fontScale = clamped) }
+        viewModelScope.launch { settingsRepository.setArticleFontScale(clamped) }
+    }
+
+    /** 调行距 */
+    fun setLineHeightScale(scale: Float) {
+        val clamped = scale.coerceIn(1.0f, 1.9f)
+        _state.update { it.copy(lineHeightScale = clamped) }
+        viewModelScope.launch { settingsRepository.setArticleLineHeightScale(clamped) }
     }
 
     fun dismissMessage() {

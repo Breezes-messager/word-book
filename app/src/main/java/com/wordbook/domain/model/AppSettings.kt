@@ -34,4 +34,8 @@ data class AppSettings(
     val uiStyle: UiStyle = UiStyle.SYSTEM,
     /** 深浅色偏好 */
     val darkMode: DarkModeSetting = DarkModeSetting.FOLLOW_SYSTEM,
+    /** 文章正文字号倍率（0.85–1.6） */
+    val articleFontScale: Float = 1.0f,
+    /** 文章行距倍率（1.0–1.9） */
+    val articleLineHeightScale: Float = 1.0f,
 )

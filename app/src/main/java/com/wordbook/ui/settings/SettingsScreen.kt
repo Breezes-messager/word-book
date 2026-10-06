@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -61,6 +62,8 @@ import com.wordbook.domain.model.ArticleStyle
 import com.wordbook.domain.model.DarkModeSetting
 import com.wordbook.domain.model.UiStyle
 import com.wordbook.ui.components.StyleSectionTitle
+import com.wordbook.ui.theme.articleBodyStyle
+import com.wordbook.ui.theme.articleSecondaryStyle
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -181,6 +184,67 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "每天用学过的词生成文章，每篇 " + 5 + "–20 个目标词；今天学的词少于 5 个时不能生成",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+        SectionCard("文章阅读") {
+            Text(
+                text = "正文字号：" + (state.settings.articleFontScale * 100).roundToInt() + "%",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Slider(
+                value = state.settings.articleFontScale,
+                onValueChange = viewModel::setArticleFontScale,
+                valueRange = 0.85f..1.6f,
+                steps = 14,
+            )
+            Text(
+                text = "行距：" + (state.settings.articleLineHeightScale * 100).roundToInt() + "%",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Slider(
+                value = state.settings.articleLineHeightScale,
+                onValueChange = viewModel::setArticleLineHeightScale,
+                valueRange = 1.0f..1.9f,
+                steps = 17,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "预览",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.height(6.dp))
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = "Last week I read a short paragraph about a famous scientist. " +
+                            "It was not long, but it had a deep influence on me.",
+                        style = articleBodyStyle(
+                            state.settings.articleFontScale,
+                            state.settings.articleLineHeightScale,
+                        ),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "上周我读了一段关于一位著名科学家的短文。它不长，但对我产生了深远的影响。",
+                        style = articleSecondaryStyle(
+                            state.settings.articleFontScale,
+                            state.settings.articleLineHeightScale,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "文章页顶部也有「A− A+ 行距− 行距+」，读的时候随手就能调",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
