@@ -16,8 +16,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // 发新版本时：versionCode 每次 +1（商店 / 安装升级用），versionName 用语义化版本号
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 词库导入时需要较大的游标窗口
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
@@ -118,6 +118,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.navigation.testing)
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.androidx.room.runtime)

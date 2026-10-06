@@ -2,9 +2,9 @@ package com.wordbook.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -60,15 +60,7 @@ fun WordBookNavHost() {
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
-                            onClick = {
-                                if (currentRoute != tab.route) {
-                                    navController.navigate(tab.route) {
-                                        popUpTo(Routes.HOME) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
+                            onClick = { navController.switchTab(currentRoute, tab.route) },
                             icon = { Icon(tab.icon, contentDescription = tab.label) },
                             label = { Text(tab.label) },
                         )
@@ -86,13 +78,16 @@ fun WordBookNavHost() {
                 HomeScreen(
                     onStartStudy = { navController.navigate(Routes.STUDY) },
                     onStartReview = { navController.navigate(Routes.REVIEW) },
-                    onOpenArticle = { navController.navigate(Routes.ARTICLE) },
+                    // 和底部导航用同一套跳转逻辑，避免返回栈里堆出重复的 article
+                    onOpenArticle = { navController.switchTab(currentRoute, Routes.ARTICLE) },
                     onOpenWordList = { navController.navigate(Routes.WORDS) },
-                    onOpenStats = { navController.navigate(Routes.STATS) },
+                    onOpenStats = { navController.switchTab(currentRoute, Routes.STATS) },
                 )
             }
             composable(Routes.ARTICLE) {
-                ArticleScreen(onOpenSettings = { navController.navigate(Routes.SETTINGS) })
+                ArticleScreen(
+                    onOpenSettings = { navController.switchTab(currentRoute, Routes.SETTINGS) },
+                )
             }
             composable(Routes.STATS) { StatsScreen() }
             composable(Routes.SETTINGS) { SettingsScreen() }

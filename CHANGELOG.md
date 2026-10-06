@@ -1,5 +1,25 @@
 # 更新日志
 
+## v1.0.2 — 2026-10-06
+
+### 修复（用户反馈）
+
+- **「首页点『最近生成的文章』进文章页后，再点底部『首页』没反应」**
+
+  原因：底部导航用的是官方示例里的 `saveState = true` / `restoreState = true`，
+  而首页那张卡片是直接 `navigate("article")` 的（没有 popUpTo）。两者叠加后返回栈状态错乱，
+  点首页时 `restoreState` 又把旧的返回栈恢复出来，界面依旧停在文章页。
+
+  修法：把 tab 切换统一抽成 `ui/TabNavigation.kt` 里的 `switchTab()`，
+  卡片、底部导航、「去设置」全部走同一套跳转（回到首页栈底 + launchSingleTop），
+  不再保存 / 恢复 tab 状态，返回栈永远是 `[home]` 或 `[home, xxx]`。
+
+### 新增
+
+- `TabNavigationTest`（6 个 Robolectric 用例）复现并锁住这个 bug：
+  卡片进文章页 → 点首页必须真的回到首页；反复切 tab 后返回键落在首页；
+  连点同一个 tab 不堆层级。测试总数 29 → 35。
+
 ## v1.0.1 — 2026-10-06
 
 ### 修复
