@@ -1,0 +1,138 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #1A1D21; font-family: "Microsoft YaHei", sans-serif; }
+.board { padding: 28px 34px 34px; }
+.head { margin-bottom: 18px; }
+.name { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+.desc { font-size: 14px; opacity: .62; margin-top: 4px; }
+.row { display: flex; gap: 26px; }
+.phone { width: 360px; height: 760px; border-radius: 26px; overflow: hidden; display: flex; flex-direction: column; }
+.screen { flex: 1; overflow: hidden; padding: 16px 18px; }
+.status { height: 26px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 11px; }
+
+.board { color: #EEF1F5; }
+.phone { background: #0B0D10; border: 1px solid #262B33; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.status { color: #6B7480; font-family: Consolas, monospace; }
+.h-title { font-size: 15px; letter-spacing: 6px; color: #7C8794; text-transform: uppercase; margin-bottom: 22px; }
+.metric { margin-bottom: 20px; }
+.metric-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: #8892A0; }
+.metric-top b { font-family: Consolas, monospace; font-size: 19px; color: #EEF1F5; }
+.bar { height: 3px; background: #1E232B; margin-top: 10px; }
+.bar i { display: block; height: 3px; background: #3DDC97; box-shadow: 0 0 10px #3DDC9788; }
+.bar i[style*="0%"] { background: #2A3038; box-shadow: none; }
+.hint { font-family: Consolas, monospace; font-size: 11px; color: #5E6773; margin: 18px 0 22px; }
+.btn-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.btn { flex: 1; text-align: center; padding: 12px 0; font-size: 14px; border: 1px solid #2A3038; color: #C7CFD9; }
+.btn.primary { background: #3DDC97; color: #06231A; border-color: #3DDC97; font-weight: 700; }
+.btn.wide { display: block; margin-bottom: 22px; }
+.card { background: #12161B; border: 1px solid #222831; padding: 14px; }
+.tag { font-size: 10px; letter-spacing: 3px; color: #3DDC97; }
+.card-title { font-size: 17px; line-height: 1.4; margin: 8px 0 4px; }
+.card-sub { font-family: Consolas, monospace; font-size: 11px; color: #5E6773; }
+.section { display: flex; justify-content: space-between; font-size: 12px; color: #7C8794; margin: 24px 0 8px;
+           letter-spacing: 1px; }
+.more { color: #3DDC97; }
+.list-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #171C22; }
+.word { font-size: 19px; }
+.ph { font-family: Consolas, monospace; font-size: 11px; color: #5E6773; }
+.cn { font-size: 12px; color: #8892A0; margin-top: 3px; }
+.play { color: #3DDC97; }
+.nav { height: 52px; display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #171C22;
+       font-size: 12px; color: #5E6773; background: #0E1115; }
+.nav .on { color: #3DDC97; }
+.study-top { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #8892A0; }
+.study-top span:first-child { font-size: 18px; }
+.wordcard { text-align: center; padding: 10px 0; }
+.bigword { font-size: 44px; letter-spacing: -1px; }
+.bigph { font-family: Consolas, monospace; font-size: 13px; color: #5E6773; margin: 12px 0 30px; }
+.pos { font-size: 15px; color: #C7CFD9; margin-bottom: 8px; }
+.quote { font-size: 13px; color: #8892A0; margin-top: 26px; }
+.quote-cn { font-size: 12px; color: #5E6773; margin-top: 6px; }
+.screen.study { display: flex; flex-direction: column; }
+.wordcard { margin: auto 0; }
+.ratings { display: flex; gap: 8px; }
+.rate { flex: 1; text-align: center; padding: 12px 0; font-size: 13px; border: 1px solid #2A3038; color: #C7CFD9; line-height: 1.6; }
+.rate b { display: block; font-family: Consolas, monospace; font-size: 10px; font-weight: 400; color: #6B7480; }
+.rate.r1 { border-color: #FF6B6B; color: #FF6B6B; }
+.rate.r2 { border-color: #E8A33D; color: #E8A33D; }
+.rate.r3 { border-color: #3DDC97; color: #3DDC97; }
+.rate.r4 { border-color: #4D9BFF; color: #4D9BFF; }
+.rate.r3 { background: #3DDC9715; }
+.a-title { font-size: 22px; line-height: 1.35; }
+.a-sub { font-size: 12px; color: #5E6773; margin: 8px 0 20px; }
+.para { font-size: 15px; line-height: 2; color: #C7CFD9; margin-bottom: 18px; }
+mark { background: #3DDC9722; color: #3DDC97; padding: 0 2px; }
+
+</style></head><body>
+<div class="board">
+  <div class="head">
+    <div class="name">风格 B · 暗夜专注 Midnight Focus</div>
+    <div class="desc">近黑底 + 薄荷荧光 + 巨型单词，界面全部退让；适合晚上刷词</div>
+  </div>
+  <div class="row">
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen home">
+        <div class="h-title">今日任务</div>
+        <div class="metric">
+          <div class="metric-top"><span>新词</span><b>29 / 70</b></div>
+          <div class="bar"><i style="width:41%"></i></div>
+        </div>
+        <div class="metric">
+          <div class="metric-top"><span>待复习</span><b>21 个</b></div>
+          <div class="bar"><i style="width:0%"></i></div>
+        </div>
+        <div class="hint">连续打卡 1 天 · 词库共 5046 词</div>
+        <div class="btn-row"><div class="btn primary">开始学习</div><div class="btn">开始复习</div></div>
+        <div class="btn wide">&#9654;&nbsp; 今日文章</div>
+        <div class="card article-card">
+          <div class="tag">最近生成的文章</div>
+          <div class="card-title">A Journey of Discovery in a Small Group</div>
+          <div class="card-sub">2026-10-06 · 小群体中的发现之旅</div>
+        </div>
+        <div class="section">词书预览（前 20 个词）<span class="more">查看全部</span></div>
+        <div class="list-row"><div><div class="word">paragraph</div><div class="ph">/'pærəgræf/</div><div class="cn">n. 段落;短评;段落符号</div></div><div class="play">&#9654;</div></div>
+      </div>
+      <div class="nav"><span class="on">首页</span><span>文章</span><span>统计</span><span>设置</span></div>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen study">
+        <div class="study-top"><span>&#10005;</span><span>学习新词</span><span class="count">3 / 20</span></div>
+        <div class="wordcard">
+          <div class="bigword">paragraph</div>
+          <div class="bigph">/'pærəgræf/</div>
+          <div class="pos">n. 段落;短评;段落符号</div>
+          <div class="pos">v. 将…分段</div>
+          <div class="quote">the opening paragraphs of the novel</div>
+          <div class="quote-cn">小说开篇的几个段落</div>
+        </div>
+        <div class="ratings">
+          <div class="rate r1">重来<b>1 分钟</b></div>
+          <div class="rate r2">困难<b>6 分钟</b></div>
+          <div class="rate r3">良好<b>10 分钟</b></div>
+          <div class="rate r4">简单<b>8 天</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen article">
+        <div class="a-title">A Journey of Discovery in a Small Group</div>
+        <div class="a-sub">小群体中的发现之旅</div>
+        <p class="para">Last week I read a short <mark>paragraph</mark> about a famous scientist.
+        It was not long, but it had a deep <mark>influence</mark> on me.</p>
+        <p class="para">The paragraph described how the scientist used his
+        <mark>intellectual</mark> power to solve a problem that many people thought was too hard.</p>
+        <div class="btn wide">显示中文翻译</div>
+        <div class="hint">风格：小故事 · 生成时间：2026 年 10 月 6 日 09:03</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body></html>
