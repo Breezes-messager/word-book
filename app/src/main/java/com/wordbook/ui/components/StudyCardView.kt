@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,13 +73,18 @@ fun StudyCardView(
     /** 翻面后四方向滑动评分：左=重来 下=困难 右=良好 上=简单 */
     onRateByGesture: ((Rating) -> Unit)? = null,
 ) {
-    val rotation by animateFloatAsState(
-        targetValue = if (flipped) 180f else 0f,
-        animationSpec = tween(320),
-        label = "cardRotation",
-    )
+    // key 换成 word.id：换到下一张卡时动画状态重置，直接以正面出现，
+    // 不会播一段 180°→0° 的"翻回来"动画（那个动画容易被误解成"回到上一张"）
+    val rotation by key(word.id) {
+        animateFloatAsState(
+            targetValue = if (flipped) 180f else 0f,
+            animationSpec = tween(320),
+            label = "cardRotation",
+        )
+    }
     var dragOffset by remember(word.id) { mutableStateOf(Offset.Zero) }
-    val threshold = with(LocalDensity.current) { 90.dp.toPx() }
+    // 64dp：比原来的 90dp 更容易触发，短促的滑动手势也能识别
+    val threshold = with(LocalDensity.current) { 64.dp.toPx() }
     // 释义内容可能需要上下滚动：能滚的时候上下滑交给滚动，不能滚的时候上下滑才是评分
     val scrollState = rememberScrollState()
     val verticalRatingEnabled = showBackContent && scrollState.maxValue == 0

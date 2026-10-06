@@ -1,5 +1,6 @@
 package com.wordbook.ui.study
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -23,8 +25,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wordbook.ui.components.StudyCardView
@@ -88,6 +92,28 @@ fun StudyScreen(
                         contexts = state.current!!.contexts,
                         onRateByGesture = viewModel::rate,
                     )
+                    // 评分反馈要放在卡片**后面**声明，Compose 里后声明的画在上层，
+                    // 否则会被卡片整块盖住看不见
+                    state.feedback?.let { text ->
+                        LaunchedEffect(state.feedbackToken) {
+                            delay(1000)
+                            viewModel.clearFeedback()
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = 14.dp)
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(horizontal = 18.dp, vertical = 8.dp),
+                        ) {
+                            Text(
+                                text = text,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
+                    }
                 }
 
                 state.error?.let { message ->

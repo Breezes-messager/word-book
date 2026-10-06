@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.wordbook.data.repo.StudyRepository
 import com.wordbook.data.repo.StudyWord
 import com.wordbook.domain.fsrs.Rating
+import com.wordbook.util.formatInterval
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,9 @@ data class StudyUiState(
     val finished: Boolean = false,
     val empty: Boolean = false,
     val error: String? = null,
+    /** 刚评完分的反馈文字（"良好 · 10 分钟"），短暂显示一下 */
+    val feedback: String? = null,
+    val feedbackToken: Long = 0L,
 )
 
 @HiltViewModel
@@ -87,7 +91,13 @@ class StudyViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val duration = System.currentTimeMillis() - cardShownAt
-                studyRepository.rate(current, rating, duration)
+                val result = studyRepository.rate(current, rating, duration)
+                _state.update {
+                    it.copy(
+                        feedback = ratingLabel(rating) + " · " + formatInterval(result.intervalAfterMs),
+                        feedbackToken = System.currentTimeMillis(),
+                    )
+                }
 
                 // “重来”的卡在本轮里再出现一次（每张卡最多一次），符合学习步的逻辑
                 if (rating == Rating.AGAIN && requeued.add(current.card.id)) {
@@ -99,6 +109,18 @@ class StudyViewModel @Inject constructor(
                 _state.update { it.copy(error = "保存失败：" + (t.message ?: t.javaClass.simpleName)) }
             }
         }
+    }
+
+    /** 反馈显示完就清掉 */
+    fun clearFeedback() {
+        _state.update { it.copy(feedback = null) }
+    }
+
+    private fun ratingLabel(rating: Rating): String = when (rating) {
+        Rating.AGAIN -> "重来"
+        Rating.HARD -> "困难"
+        Rating.GOOD -> "良好"
+        Rating.EASY -> "简单"
     }
 
     private suspend fun loadPreviews() {
