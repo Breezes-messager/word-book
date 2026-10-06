@@ -85,6 +85,8 @@ fun StudyScreen(
                         showBackContent = state.flipped,
                         onFlip = viewModel::flip,
                         onSpeak = speaker::speak,
+                        contexts = state.current!!.contexts,
+                        onRateByGesture = viewModel::rate,
                     )
                 }
 
@@ -99,6 +101,15 @@ fun StudyScreen(
 
                 Spacer(Modifier.height(12.dp))
                 if (state.flipped) {
+                    Text(
+                        text = "滑动评分：← 重来　→ 良好（困难 / 简单 点按钮）",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
                     StyleRatingRow(
                         previews = state.previews,
                         onRate = viewModel::rate,

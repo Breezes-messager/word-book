@@ -38,6 +38,12 @@ data class WordEntity(
     val deckPriority: Int,
     /** 乱序模式下的排序键（构建时生成，保证多次启动顺序稳定） */
     val shuffleKey: Int,
+    /** 记忆法：词根词缀拆解，例如 para(在旁边)+graph(写)→写在文字旁边→段 */
+    val remMethod: String? = null,
+    /** 同近义词 JSON：[{"pos":"n","tran":"影响","words":["effect",...]}] */
+    val synoJson: String? = null,
+    /** 同根词 JSON：[{"pos":"n","words":[{"hwd":"paragrapher","tran":"短评记者"}]}] */
+    val relWordJson: String? = null,
 )
 
 /** 学习卡片，状态与 FSRS 参数一一对应。 */
@@ -98,6 +104,34 @@ data class ReviewLogEntity(
     val elapsedDays: Long,
     /** 用户在这张卡上停留的时间（毫秒） */
     val durationMs: Long,
+)
+
+/**
+ * 词语在生成文章里的真实用法（例句回填）。
+ * 文章本来就是围绕当天学的词写的，把这些句子回填到词卡上，比词典例句更贴自己的记忆。
+ */
+@Entity(
+    tableName = "word_contexts",
+    foreignKeys = [
+        ForeignKey(
+            entity = WordEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["wordId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["wordId"]),
+        Index(value = ["wordId", "sentence"], unique = true),
+    ],
+)
+data class WordContextEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val wordId: Long,
+    val sentence: String,
+    /** 这句出自哪天的文章 */
+    val sourceDate: String,
+    val createdAt: Long,
 )
 
 /** 生成的文章（原始 JSON 落盘，断网时用缓存） */

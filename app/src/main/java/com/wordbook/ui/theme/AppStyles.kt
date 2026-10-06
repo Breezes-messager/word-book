@@ -54,6 +54,8 @@ data class AppStyleTokens(
     val cardBorder: BorderStroke?,
     /** 硬阴影（偏移实心块） */
     val cardHardShadow: Boolean = false,
+    /** 硬阴影颜色（浅色马克笔是黑，深色马克笔是白） */
+    val hardShadowColor: Color = Color(0xFF101010),
     /** 卡片是否用 Material 的 elevation */
     val cardElevation: Int = 1,
     /** 进度条高度与是否圆角 */
@@ -177,6 +179,81 @@ private val MarkerScheme: ColorScheme = lightColorScheme(
     outline = Color(0xFF101010),
     outlineVariant = Color(0xFFD5D5D5),
     error = Color(0xFFD93025),
+)
+
+/** A · 墨纸的暗色版（墨夜）：暖调近黑，朱红提亮 */
+private val InkDarkScheme: ColorScheme = darkColorScheme(
+    primary = Color(0xFFE0705F),
+    onPrimary = Color(0xFF35100A),
+    primaryContainer = Color(0xFF4A1A13),
+    onPrimaryContainer = Color(0xFFF5D9D3),
+    secondary = Color(0xFFC4BCA9),
+    onSecondary = Color(0xFF2A2820),
+    secondaryContainer = Color(0xFF2E2A22),
+    onSecondaryContainer = Color(0xFFEDE7DA),
+    tertiary = Color(0xFF8FB0D6),
+    onTertiary = Color(0xFF0C1A2A),
+    background = Color(0xFF14120F),
+    onBackground = Color(0xFFEDE7DA),
+    surface = Color(0xFF1A1714),
+    onSurface = Color(0xFFEDE7DA),
+    surfaceVariant = Color(0xFF221E19),
+    onSurfaceVariant = Color(0xFFA69C88),
+    surfaceContainer = Color(0xFF1A1714),
+    surfaceContainerHigh = Color(0xFF221E19),
+    outline = Color(0xFF3A342B),
+    outlineVariant = Color(0xFF2A251E),
+    error = Color(0xFFE0705F),
+)
+
+/** C · 薄荷的暗色版 */
+private val MintDarkScheme: ColorScheme = darkColorScheme(
+    primary = Color(0xFF4CC49A),
+    onPrimary = Color(0xFF06231A),
+    primaryContainer = Color(0xFF1E4636),
+    onPrimaryContainer = Color(0xFFCDEEDF),
+    secondary = Color(0xFF8FAFA2),
+    onSecondary = Color(0xFF12271F),
+    secondaryContainer = Color(0xFF24352D),
+    onSecondaryContainer = Color(0xFFDCEAE2),
+    tertiary = Color(0xFFE8A33D),
+    onTertiary = Color(0xFF2A1C00),
+    background = Color(0xFF0E1512),
+    onBackground = Color(0xFFDCEAE2),
+    surface = Color(0xFF141C18),
+    onSurface = Color(0xFFDCEAE2),
+    surfaceVariant = Color(0xFF1B2721),
+    onSurfaceVariant = Color(0xFF8FAFA2),
+    surfaceContainer = Color(0xFF141C18),
+    surfaceContainerHigh = Color(0xFF1B2721),
+    outline = Color(0xFF2A3B33),
+    outlineVariant = Color(0xFF1E2B24),
+    error = Color(0xFFE4695F),
+)
+
+/** D · 马克笔的暗色版（黑板 + 荧光笔） */
+private val MarkerDarkScheme: ColorScheme = darkColorScheme(
+    primary = Color(0xFFFFE94A),
+    onPrimary = Color(0xFF16160F),
+    primaryContainer = Color(0xFFFFE94A),
+    onPrimaryContainer = Color(0xFF16160F),
+    secondary = Color(0xFF9CC7FF),
+    onSecondary = Color(0xFF00174A),
+    secondaryContainer = Color(0xFF1B2A44),
+    onSecondaryContainer = Color(0xFFD8E2FF),
+    tertiary = Color(0xFFE8A33D),
+    onTertiary = Color(0xFF16160F),
+    background = Color(0xFF121212),
+    onBackground = Color(0xFFF2F2F2),
+    surface = Color(0xFF1A1A1A),
+    onSurface = Color(0xFFF2F2F2),
+    surfaceVariant = Color(0xFF26241A),
+    onSurfaceVariant = Color(0xFFB8B8B8),
+    surfaceContainer = Color(0xFF1A1A1A),
+    surfaceContainerHigh = Color(0xFF26241A),
+    outline = Color(0xFFF2F2F2),
+    outlineVariant = Color(0xFF3A3A3A),
+    error = Color(0xFFFF8A80),
 )
 
 // ------------------------------------------------------------------ 圆角 / 字体
@@ -332,22 +409,54 @@ private val MarkerTokens = AppStyleTokens(
     ),
 )
 
-/** 取某套风格的颜色方案 / 形状 / 字体 / 令牌 */
+/** 暗色下的令牌微调：描边色要跟着底色换，否则看不见 */
+private val InkTokensDark = InkTokens.copy(
+    cardBorder = BorderStroke(1.dp, Color(0xFF3A342B)),
+)
+
+private val MarkerTokensDark = MarkerTokens.copy(
+    cardBorder = BorderStroke(2.dp, Color(0xFFF2F2F2)),
+    hardShadowColor = Color(0xFFF2F2F2),
+    progressBorder = BorderStroke(2.dp, Color(0xFFF2F2F2)),
+    highlightText = Color(0xFF16160F),
+    rating = MarkerTokens.rating.map { it.copy(borderColor = Color(0xFFF2F2F2)) },
+)
+
+/**
+ * 取某套风格在当前深浅模式下的完整定义。
+ * @param dark 已经算好的"最终是否深色"（把用户设置、系统设置、风格自身的限制都合并了）
+ * scheme = null 表示交给系统的动态取色（只有「跟随系统」这一档）
+ */
 data class StyleDefinition(
     val scheme: ColorScheme?,
     val shapes: Shapes,
     val typography: Typography,
     val tokens: AppStyleTokens,
-    /** 是否强制深色（暗夜风不跟随系统） */
-    val forceDark: Boolean = false,
 )
 
-fun definitionOf(style: UiStyle): StyleDefinition = when (style) {
+fun definitionOf(style: UiStyle, dark: Boolean): StyleDefinition = when (style) {
+    // 跟随系统：颜色交给 Material You / 系统深浅色
     UiStyle.SYSTEM -> StyleDefinition(null, Shapes(), baseTypography(), SystemTokens)
-    UiStyle.INK -> StyleDefinition(InkScheme, SharpShapes, inkTypography(), InkTokens)
-    UiStyle.MIDNIGHT -> StyleDefinition(MidnightScheme, SharpShapes, midnightTypography(), MidnightTokens, forceDark = true)
-    UiStyle.MINT -> StyleDefinition(MintScheme, SoftShapes, mintTypography(), MintTokens)
-    UiStyle.MARKER -> StyleDefinition(MarkerScheme, MarkerShapes, markerTypography(), MarkerTokens)
+    UiStyle.INK -> StyleDefinition(
+        scheme = if (dark) InkDarkScheme else InkScheme,
+        shapes = SharpShapes,
+        typography = inkTypography(),
+        tokens = if (dark) InkTokensDark else InkTokens,
+    )
+    // 暗夜专注本身就是深色风格，不提供浅色版
+    UiStyle.MIDNIGHT -> StyleDefinition(MidnightScheme, SharpShapes, midnightTypography(), MidnightTokens)
+    UiStyle.MINT -> StyleDefinition(
+        scheme = if (dark) MintDarkScheme else MintScheme,
+        shapes = SoftShapes,
+        typography = mintTypography(),
+        tokens = MintTokens,
+    )
+    UiStyle.MARKER -> StyleDefinition(
+        scheme = if (dark) MarkerDarkScheme else MarkerScheme,
+        shapes = MarkerShapes,
+        typography = markerTypography(),
+        tokens = if (dark) MarkerTokensDark else MarkerTokens,
+    )
 }
 
 val LocalAppStyle = staticCompositionLocalOf { SystemTokens }

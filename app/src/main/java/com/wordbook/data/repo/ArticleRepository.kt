@@ -3,6 +3,7 @@ package com.wordbook.data.repo
 import com.wordbook.data.db.AppDatabase
 import com.wordbook.data.db.ArticleEntity
 import com.wordbook.data.db.ArticleWordEntity
+import com.wordbook.data.db.WordContextEntity
 import com.wordbook.data.db.WordEntity
 import com.wordbook.data.prefs.SettingsRepository
 import com.wordbook.data.remote.ArticleGenerator
@@ -22,6 +23,7 @@ class ArticleRepository @Inject constructor(
     private val generator: ArticleGenerator,
 ) {
     private val articleDao = db.articleDao()
+    private val wordContextDao = db.wordContextDao()
 
     fun todayKey(): String = LocalDate.now().toString()
 
@@ -143,7 +145,48 @@ class ArticleRepository @Inject constructor(
             )
         }
         if (links.isNotEmpty()) articleDao.insertWords(links)
+
+        // 例句回填：把目标词在文章里出现的那个句子，挂到对应词上
+        backfillContexts(content, wordIds)
+
         return entity.copy(id = id)
+    }
+
+    /**
+     * 把文章里含目标词的句子回填到 word_contexts。
+     * 同一句只存一次（唯一索引 + IGNORE），所以反复生成也不会重复堆积。
+     */
+    private suspend fun backfillContexts(content: ArticleContent, wordIds: Map<String, Long>) {
+        val day = todayKey()
+        val now = System.currentTimeMillis()
+        val seen = mutableSetOf<Pair<Long, String>>()
+        val contexts = mutableListOf<WordContextEntity>()
+
+        content.occurrences.forEach { occurrence ->
+            val wordId = wordIds[occurrence.target.lowercase()] ?: return@forEach
+            val paragraph = content.paragraphs.getOrNull(occurrence.paragraph) ?: return@forEach
+            val sentence = sentenceContaining(paragraph, occurrence.surface) ?: return@forEach
+            if (seen.add(wordId to sentence)) {
+                contexts += WordContextEntity(
+                    wordId = wordId,
+                    sentence = sentence,
+                    sourceDate = day,
+                    createdAt = now,
+                )
+            }
+        }
+        if (contexts.isNotEmpty()) wordContextDao.insertAll(contexts)
+    }
+
+    /** 在一段里找出包含指定词形的那个句子 */
+    private fun sentenceContaining(paragraph: String, surface: String): String? {
+        if (surface.isBlank()) return null
+        val pattern = Regex("\\b" + Regex.escape(surface) + "\\b", RegexOption.IGNORE_CASE)
+        return paragraph
+            .split(Regex("(?<=[.!?])\\s+"))
+            .map { it.trim() }
+            .firstOrNull { it.isNotEmpty() && pattern.containsMatchIn(it) }
+            ?.take(300)
     }
 
     /** 手动导入一篇文章（示例 / 测试用），走完全相同的落盘路径 */

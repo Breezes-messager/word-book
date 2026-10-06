@@ -32,4 +32,6 @@ data class AppSettings(
     val translationExpanded: Boolean = false,
     /** 界面风格（切换后立即生效） */
     val uiStyle: UiStyle = UiStyle.SYSTEM,
+    /** 深浅色偏好 */
+    val darkMode: DarkModeSetting = DarkModeSetting.FOLLOW_SYSTEM,
 )

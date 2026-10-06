@@ -9,8 +9,10 @@ import com.wordbook.data.repo.StatsRepository
 import com.wordbook.data.repo.StudyRepository
 import com.wordbook.domain.model.AppSettings
 import com.wordbook.domain.model.ArticleStyle
+import com.wordbook.domain.model.DarkModeSetting
 import com.wordbook.domain.model.UiStyle
 import com.wordbook.util.DataExporter
+import com.wordbook.util.DataImporter
 import com.wordbook.work.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +39,7 @@ data class SettingsUiState(
     val dictSize: Int = 0,
     val exportPath: String? = null,
     val exporting: Boolean = false,
+    val importing: Boolean = false,
     val clearing: Boolean = false,
 )
 
@@ -49,6 +52,7 @@ class SettingsViewModel @Inject constructor(
     private val articleGenerator: ArticleGenerator,
     private val reminderScheduler: ReminderScheduler,
     private val dataExporter: DataExporter,
+    private val dataImporter: DataImporter,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -107,6 +111,10 @@ class SettingsViewModel @Inject constructor(
     /** 切换界面风格，立即生效（主题层直接观察 DataStore） */
     fun setUiStyle(style: UiStyle) {
         viewModelScope.launch { settingsRepository.setUiStyle(style) }
+    }
+
+    fun setDarkMode(mode: DarkModeSetting) {
+        viewModelScope.launch { settingsRepository.setDarkMode(mode) }
     }
 
     fun onApiKeyChange(value: String) = _state.update { it.copy(apiKeyInput = value, testResult = null) }
@@ -172,6 +180,35 @@ class SettingsViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _state.update { it.copy(exporting = false, error = "导出失败：" + (error.message ?: "")) }
+                },
+            )
+        }
+    }
+
+    /** 从备份文件导入学习数据（覆盖式，换手机迁移用） */
+    fun importData(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _state.update { it.copy(importing = true, message = null, error = null) }
+            runCatching { dataImporter.import(uri) }.fold(
+                onSuccess = { result ->
+                    val skipped = if (result.skippedWords > 0) {
+                        "（" + result.skippedWords + " 个词本地词库没有，已跳过）"
+                    } else {
+                        ""
+                    }
+                    _state.update {
+                        it.copy(
+                            importing = false,
+                            message = "导入完成：卡片 " + result.cards + " 张、复习日志 " +
+                                result.reviewLogs + " 条、文章 " + result.articles + " 篇" + skipped,
+                        )
+                    }
+                    loadStats()
+                },
+                onFailure = { error ->
+                    _state.update {
+                        it.copy(importing = false, error = "导入失败：" + (error.message ?: "未知错误"))
+                    }
                 },
             )
         }

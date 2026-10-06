@@ -14,8 +14,12 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** 一张待学习的词 + 它的卡片 */
-data class StudyWord(val word: WordEntity, val card: CardEntity)
+/** 一张待学习的词 + 它的卡片 + 它在历史文章里的真实用法 */
+data class StudyWord(
+    val word: WordEntity,
+    val card: CardEntity,
+    val contexts: List<String> = emptyList(),
+)
 
 /** 首页今日任务 */
 data class TodayTask(
@@ -43,6 +47,15 @@ class StudyRepository @Inject constructor(
     private val wordDao = db.wordDao()
     private val cardDao = db.cardDao()
     private val logDao = db.reviewLogDao()
+    private val contextDao = db.wordContextDao()
+
+    /** 批量取"文章例句"，最多每个词 2 句 */
+    private suspend fun contextsFor(wordIds: List<Long>): Map<Long, List<String>> {
+        if (wordIds.isEmpty()) return emptyMap()
+        return contextDao.byWordIds(wordIds)
+            .groupBy { it.wordId }
+            .mapValues { (_, list) -> list.take(2).map { it.sentence } }
+    }
 
     fun todayKey(): String = LocalDate.now().toString()
 
@@ -107,7 +120,8 @@ class StudyRepository @Inject constructor(
             }
             result += StudyWord(word, card)
         }
-        return result
+        val contexts = contextsFor(result.map { it.word.id })
+        return result.map { it.copy(contexts = contexts[it.word.id].orEmpty()) }
     }
 
     /** 复习队列：所有到期的卡，按到期时间升序；每日复习上限由设置决定 */
@@ -123,7 +137,10 @@ class StudyRepository @Inject constructor(
         if (selected.isEmpty()) return emptyList()
 
         val words = wordDao.byIds(selected.map { it.wordId }).associateBy { it.id }
-        return selected.mapNotNull { card -> words[card.wordId]?.let { StudyWord(it, card) } }
+        val contexts = contextsFor(selected.map { it.wordId })
+        return selected.mapNotNull { card ->
+            words[card.wordId]?.let { StudyWord(it, card, contexts[card.wordId].orEmpty()) }
+        }
     }
 
     /** 某张卡四档评分的预估间隔，用于按钮上显示 */

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.wordbook.domain.model.DarkModeSetting
 import com.wordbook.domain.model.UiStyle
 
 private val LightColors = lightColorScheme(
@@ -63,18 +64,25 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun WordBookTheme(
     style: UiStyle = UiStyle.SYSTEM,
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkMode: DarkModeSetting = DarkModeSetting.FOLLOW_SYSTEM,
+    systemDark: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val definition = definitionOf(style)
-    val effectiveDark = definition.forceDark || (definition.scheme == null && darkTheme)
+    // 最终深浅：风格的硬性限制 > 用户设置 > 系统
+    val effectiveDark = when {
+        style == UiStyle.MIDNIGHT -> true
+        darkMode == DarkModeSetting.DARK -> true
+        darkMode == DarkModeSetting.LIGHT -> false
+        else -> systemDark
+    }
+    val definition = definitionOf(style, effectiveDark)
 
     val colorScheme = definition.scheme ?: when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
+            if (effectiveDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        effectiveDark -> DarkColors
         else -> LightColors
     }
 

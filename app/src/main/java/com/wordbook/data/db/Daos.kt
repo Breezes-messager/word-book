@@ -21,6 +21,34 @@ interface WordDao {
     @Query("SELECT * FROM words WHERE id = :id")
     suspend fun byId(id: Long): WordEntity?
 
+    /** 词书数据升级时，只补新字段，不动卡片关联（id 不变，复习进度安全） */
+    @Query(
+        "UPDATE words SET headword = :headword, phoneticUs = :phoneticUs, phoneticUk = :phoneticUk, " +
+            "transCn = :transCn, transEn = :transEn, examplesJson = :examplesJson, " +
+            "phrasesJson = :phrasesJson, remMethod = :remMethod, synoJson = :synoJson, " +
+            "relWordJson = :relWordJson WHERE id = :id"
+    )
+    suspend fun updateDetails(
+        id: Long,
+        headword: String,
+        phoneticUs: String?,
+        phoneticUk: String?,
+        transCn: String?,
+        transEn: String?,
+        examplesJson: String?,
+        phrasesJson: String?,
+        remMethod: String?,
+        synoJson: String?,
+        relWordJson: String?,
+    )
+
+    @Query("SELECT id FROM words")
+    suspend fun allIds(): List<Long>
+
+    /** 导入备份时用：headword -> id 的映射 */
+    @Query("SELECT id, headword FROM words")
+    suspend fun idAndHeadwords(): List<WordIdName>
+
     @Query("SELECT * FROM words WHERE id IN (:ids)")
     suspend fun byIds(ids: List<Long>): List<WordEntity>
 
@@ -75,6 +103,8 @@ interface WordDao {
 }
 
 data class DeckCount(val deck: String, val total: Int)
+
+data class WordIdName(val id: Long, val headword: String)
 
 @Dao
 interface CardDao {
@@ -153,6 +183,24 @@ interface ReviewLogDao {
     suspend fun againCount(): Int
 
     @Query("DELETE FROM review_logs")
+    suspend fun clear()
+}
+
+@Dao
+interface WordContextDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAll(contexts: List<WordContextEntity>)
+
+    @Query("SELECT * FROM word_contexts WHERE wordId = :wordId ORDER BY createdAt DESC LIMIT :limit")
+    suspend fun byWordId(wordId: Long, limit: Int = 3): List<WordContextEntity>
+
+    @Query("SELECT * FROM word_contexts WHERE wordId IN (:wordIds) ORDER BY createdAt DESC")
+    suspend fun byWordIds(wordIds: List<Long>): List<WordContextEntity>
+
+    @Query("SELECT COUNT(*) FROM word_contexts")
+    suspend fun count(): Int
+
+    @Query("DELETE FROM word_contexts")
     suspend fun clear()
 }
 

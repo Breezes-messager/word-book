@@ -4,7 +4,9 @@ import com.wordbook.data.db.CardEntity
 import com.wordbook.data.db.WordEntity
 import com.wordbook.domain.fsrs.CardState
 import com.wordbook.domain.fsrs.FsrsCard
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import java.time.Instant
 
@@ -12,10 +14,34 @@ import java.time.Instant
 @Serializable
 data class SentencePair(val en: String = "", val cn: String = "")
 
+/** 同近义词组（按词性） */
+@Serializable
+data class SynonymGroup(val pos: String = "", val tran: String = "", val words: List<String> = emptyList())
+
+/** 同根词组（按词性） */
+@Serializable
+data class RelatedWord(val hwd: String = "", val tran: String = "")
+
+@Serializable
+data class RelatedGroup(val pos: String = "", val words: List<RelatedWord> = emptyList())
+
 private val json = Json { ignoreUnknownKeys = true }
 
 fun WordEntity.examples(): List<SentencePair> = parsePairs(examplesJson)
 fun WordEntity.phrases(): List<SentencePair> = parsePairs(phrasesJson)
+
+/** 同近义词（词书自带，95% 的词有） */
+fun WordEntity.synonyms(): List<SynonymGroup> =
+    parseList(synoJson, ListSerializer(SynonymGroup.serializer()))
+
+/** 同根词（83% 的词有） */
+fun WordEntity.relatedWords(): List<RelatedGroup> =
+    parseList(relWordJson, ListSerializer(RelatedGroup.serializer()))
+
+private fun <T> parseList(raw: String?, serializer: KSerializer<List<T>>): List<T> {
+    if (raw.isNullOrBlank()) return emptyList()
+    return runCatching { json.decodeFromString(serializer, raw) }.getOrElse { emptyList() }
+}
 
 private fun parsePairs(raw: String?): List<SentencePair> {
     if (raw.isNullOrBlank()) return emptyList()

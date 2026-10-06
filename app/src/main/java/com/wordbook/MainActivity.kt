@@ -20,8 +20,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             // 界面风格从设置里读，改完立即生效（不用重启）
             val themeViewModel: ThemeViewModel = hiltViewModel()
-            val style by themeViewModel.style.collectAsStateWithLifecycle()
-            WordBookTheme(style = style) {
+            val theme by themeViewModel.state.collectAsStateWithLifecycle()
+            WordBookTheme(style = theme.style, darkMode = theme.darkMode) {
                 WordBookNavHost()
             }
         }

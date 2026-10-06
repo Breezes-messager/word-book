@@ -60,7 +60,7 @@ fun StyleCard(
                     .matchParentSize()
                     .offset(x = 4.dp, y = 4.dp)
                     .clip(shape)
-                    .background(Color(0xFF101010)),
+                    .background(tokens.hardShadowColor),
             )
         }
         Column(modifier = inner.padding(16.dp), content = content)
@@ -183,7 +183,7 @@ private fun RowScope.RatingChip(
                     .matchParentSize()
                     .offset(x = 3.dp, y = 3.dp)
                     .clip(shape)
-                    .background(Color(0xFF101010)),
+                    .background(LocalAppStyle.current.hardShadowColor),
             )
         }
         Column(
@@ -199,7 +199,7 @@ private fun RowScope.RatingChip(
                     }
                 )
                 .clickable { onClick() }
-                .padding(vertical = 10.dp),
+                .padding(vertical = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(

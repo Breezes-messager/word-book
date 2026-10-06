@@ -97,6 +97,11 @@ DECKS = [
 
 MAX_SENTENCES = 5
 MAX_PHRASES = 10
+# 记忆法 / 同近义 / 同根词的截断上限（避免单条过大）
+MAX_SYNO_GROUPS = 6
+MAX_SYNO_WORDS = 8
+MAX_REL_GROUPS = 6
+MAX_REL_WORDS = 8
 WORD_RE = re.compile(r"^[A-Za-z][A-Za-z' .\-]{0,29}$")
 
 
@@ -279,6 +284,35 @@ def parse_book(path: str, deck: str, limit: int):
             if en:
                 phrases.append({"en": en, "cn": cn})
 
+        # 记忆法（词根词缀拆解），例如 para(在旁边)+graph(写)→写在文字旁边→段
+        rem_method = clean((content.get("remMethod") or {}).get("val"))
+
+        # 同近义词：按词性分组，每组给出若干同义词
+        syno = []
+        for group in ((content.get("syno") or {}).get("synos") or [])[:MAX_SYNO_GROUPS]:
+            words = [
+                clean(w.get("w"))
+                for w in (group.get("hwds") or [])[:MAX_SYNO_WORDS]
+                if clean(w.get("w"))
+            ]
+            if words:
+                syno.append({
+                    "pos": clean(group.get("pos")),
+                    "tran": clean(group.get("tran")),
+                    "words": words,
+                })
+
+        # 同根词：按词性分组，给出同根词 + 中文
+        rel_word = []
+        for group in ((content.get("relWord") or {}).get("rels") or [])[:MAX_REL_GROUPS]:
+            words = []
+            for w in (group.get("words") or [])[:MAX_REL_WORDS]:
+                hwd = clean(w.get("hwd"))
+                if hwd:
+                    words.append({"hwd": hwd, "tran": clean(w.get("tran"))})
+            if words:
+                rel_word.append({"pos": clean(group.get("pos")), "words": words})
+
         out.append((headword, rank, {
             "phoneticUs": clean(content.get("usphone")),
             "phoneticUk": clean(content.get("ukphone")),
@@ -286,6 +320,9 @@ def parse_book(path: str, deck: str, limit: int):
             "transEn": "\n".join(en_lines),
             "examplesJson": json.dumps(examples, ensure_ascii=False) if examples else "",
             "phrasesJson": json.dumps(phrases, ensure_ascii=False) if phrases else "",
+            "remMethod": rem_method,
+            "synoJson": json.dumps(syno, ensure_ascii=False) if syno else "",
+            "relWordJson": json.dumps(rel_word, ensure_ascii=False) if rel_word else "",
         }))
     return out
 
@@ -327,6 +364,9 @@ def parse_fallback_book(path: str, limit: int):
             "transEn": "\n".join(en_lines),
             "examplesJson": json.dumps(examples, ensure_ascii=False) if examples else "",
             "phrasesJson": json.dumps(phrases, ensure_ascii=False) if phrases else "",
+            "remMethod": "",
+            "synoJson": "",
+            "relWordJson": "",
         }))
     return out
 
@@ -351,7 +391,10 @@ CREATE TABLE words (
     rank         INTEGER NOT NULL,
     deck         TEXT    NOT NULL,
     deckPriority INTEGER NOT NULL,
-    shuffleKey   INTEGER NOT NULL
+    shuffleKey   INTEGER NOT NULL,
+    remMethod    TEXT,
+    synoJson     TEXT,
+    relWordJson  TEXT
 );
 CREATE UNIQUE INDEX idx_words_headword ON words(headword);
 CREATE INDEX idx_words_order ON words(deckPriority, rank);
@@ -388,10 +431,12 @@ def build_words_db(books, out_path: str):
             kept += 1
             conn.execute(
                 "INSERT INTO words (headword, phoneticUs, phoneticUk, transCn, transEn,"
-                " examplesJson, phrasesJson, rank, deck, deckPriority, shuffleKey)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                " examplesJson, phrasesJson, rank, deck, deckPriority, shuffleKey,"
+                " remMethod, synoJson, relWordJson)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (headword, data["phoneticUs"], data["phoneticUk"], data["transCn"], data["transEn"],
-                 data["examplesJson"], data["phrasesJson"], rank, deck, priority, shuffle_key(headword)),
+                 data["examplesJson"], data["phrasesJson"], rank, deck, priority, shuffle_key(headword),
+                 data.get("remMethod", ""), data.get("synoJson", ""), data.get("relWordJson", "")),
             )
         conn.execute("INSERT INTO decks VALUES (?,?,?,?)", (deck, deck, priority, kept))
         stats.append((deck, len(entries), kept, dup))

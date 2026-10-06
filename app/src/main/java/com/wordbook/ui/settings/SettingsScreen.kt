@@ -58,6 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wordbook.BuildConfig
 import com.wordbook.domain.model.ArticleStyle
+import com.wordbook.domain.model.DarkModeSetting
 import com.wordbook.domain.model.UiStyle
 import com.wordbook.ui.components.StyleSectionTitle
 import kotlin.math.roundToInt
@@ -71,6 +72,12 @@ fun SettingsScreen(
     val context = LocalContext.current
     var showClearDialog by remember { mutableStateOf(false) }
     var showTimeDialog by remember { mutableStateOf(false) }
+    var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
+    // 选一个备份文件（.json），选完先确认再导入
+    val importPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> if (uri != null) pendingImportUri = uri }
 
     val notificationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -109,6 +116,31 @@ fun SettingsScreen(
                     selected = state.settings.uiStyle == style,
                     onClick = { viewModel.setUiStyle(style) },
                 )
+            }
+
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Text("深浅模式", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = if (state.settings.uiStyle == UiStyle.MIDNIGHT) {
+                    "当前选的「暗夜专注」本身就是深色风格，固定深色"
+                } else {
+                    "墨纸 / 薄荷圆润 / 马克笔 都各自有浅色与深色两套"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DarkModeSetting.entries.forEach { mode ->
+                    FilterChip(
+                        selected = state.settings.darkMode == mode,
+                        onClick = { viewModel.setDarkMode(mode) },
+                        label = { Text(mode.label) },
+                    )
+                }
             }
         }
 
@@ -250,6 +282,19 @@ fun SettingsScreen(
                 }
             }
             Spacer(Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { importPicker.launch(arrayOf("*/*")) },
+                enabled = !state.importing && !state.clearing,
+            ) {
+                Text(if (state.importing) "导入中…" else "导入学习数据（换手机迁移）")
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "导入会先清空当前学习数据再写入备份；词库与设置（含 API Key）不受影响。建议先导出一份再导入。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
             OutlinedButton(onClick = { showClearDialog = true }, enabled = !state.clearing) {
                 Text("清空全部数据")
             }
@@ -290,6 +335,25 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearDialog = false }) { Text("取消") }
+            },
+        )
+    }
+
+    pendingImportUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingImportUri = null },
+            title = { Text("确认导入备份？") },
+            text = {
+                Text("当前的学习进度、复习日志和文章会被**备份文件里的内容覆盖**，无法撤销。\n\n如果还没导出过当前进度，建议先点上面的「导出学习数据」。")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingImportUri = null
+                    viewModel.importData(uri)
+                }) { Text("确认导入") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingImportUri = null }) { Text("取消") }
             },
         )
     }

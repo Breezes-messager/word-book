@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.wordbook.domain.model.AppSettings
 import com.wordbook.domain.model.ArticleStyle
+import com.wordbook.domain.model.DarkModeSetting
 import com.wordbook.domain.model.UiStyle
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +41,7 @@ class SettingsRepository @Inject constructor(
         val desiredRetention = floatPreferencesKey("desired_retention")
         val translationExpanded = booleanPreferencesKey("translation_expanded")
         val uiStyle = stringPreferencesKey("ui_style")
+        val darkMode = stringPreferencesKey("dark_mode")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -55,6 +57,7 @@ class SettingsRepository @Inject constructor(
             desiredRetention = prefs[Keys.desiredRetention] ?: 0.9f,
             translationExpanded = prefs[Keys.translationExpanded] ?: false,
             uiStyle = UiStyle.fromName(prefs[Keys.uiStyle]),
+            darkMode = DarkModeSetting.fromName(prefs[Keys.darkMode]),
         )
     }
 
@@ -74,6 +77,8 @@ class SettingsRepository @Inject constructor(
     suspend fun setTranslationExpanded(value: Boolean) = context.dataStore.edit { it[Keys.translationExpanded] = value }
 
     suspend fun setUiStyle(style: UiStyle) = context.dataStore.edit { it[Keys.uiStyle] = style.name }
+
+    suspend fun setDarkMode(mode: DarkModeSetting) = context.dataStore.edit { it[Keys.darkMode] = mode.name }
 
     /** 清空全部设置（含 API Key），用于“清空全部数据” */
     suspend fun clearAll() {

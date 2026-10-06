@@ -5,6 +5,17 @@ package com.wordbook.domain.model
  *
  * 每套风格的颜色 / 圆角 / 字体 / 卡片样式定义见 ui/theme/AppStyles.kt。
  */
+/** 深浅色偏好（「暗夜专注」风格固定深色，忽略此项） */
+enum class DarkModeSetting(val label: String) {
+    FOLLOW_SYSTEM("跟随系统"),
+    LIGHT("浅色"),
+    DARK("深色");
+
+    companion object {
+        fun fromName(name: String?): DarkModeSetting = entries.firstOrNull { it.name == name } ?: FOLLOW_SYSTEM
+    }
+}
+
 enum class UiStyle(
     val label: String,
     val slogan: String,

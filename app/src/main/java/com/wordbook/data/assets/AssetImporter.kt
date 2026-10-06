@@ -16,10 +16,14 @@ import javax.inject.Singleton
 
 /**
  * 首次启动时把 assets 里的两个数据库准备好：
- *  - words.db：词书，导入到 Room 业务库（Room 表结构与脚本生成的表结构一一对应）
+ *  - words.db：词书，导入到 Room 业务库（表结构与脚本生成的表结构一一对应）
  *  - dict.db ：离线词典，拷贝到应用私有目录后以只读方式打开
  *
  * assets 里的文件全部由 tools/build_assets.py 生成，不手工维护。
+ *
+ * 词书升级（比如后来补了记忆法 / 同近义词字段）时，assets 文件体积会变，
+ * 这里用体积做版本标记：体积变了就只更新词语详情，**不动 id、不动卡片**，
+ * 所以老用户的复习进度不会丢，也不用重装。
  */
 @Singleton
 class AssetImporter @Inject constructor(
@@ -33,53 +37,115 @@ class AssetImporter @Inject constructor(
         private const val BATCH = 500
     }
 
-    /** 词书导入（幂等：已有数据则跳过） */
+    private val columns = "id, headword, phoneticUs, phoneticUk, transCn, transEn, " +
+        "examplesJson, phrasesJson, rank, deck, deckPriority, shuffleKey, " +
+        "remMethod, synoJson, relWordJson"
+
+    /** 词书准备（幂等）：空库做完整导入；assets 变了就增量刷新详情 */
     suspend fun importWordsIfNeeded(onProgress: suspend (Int) -> Unit = {}): Int =
         withContext(Dispatchers.IO) {
-            val existing = db.wordDao().count()
-            if (existing > 0) return@withContext existing.toInt()
+            val marker = File(context.filesDir, "words.version")
+            val assetSize = runCatching {
+                context.assets.openFd(WORDS_ASSET).use { it.length }
+            }.getOrNull()
+            val exists = db.wordDao().count()
+            // 注意：File.readText() 在文件不存在时会抛异常，必须先判断
+            val knownVersion = if (marker.exists()) marker.readText().trim().toLongOrNull() else null
 
-            val tmp = copyAssetToCache(WORDS_ASSET)
-            val words = mutableListOf<WordEntity>()
-            val sqlite = SQLiteDatabase.openDatabase(tmp.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
-            sqlite.use { dbFile ->
-                dbFile.rawQuery(
-                    """
-                    SELECT id, headword, phoneticUs, phoneticUk, transCn, transEn,
-                           examplesJson, phrasesJson, rank, deck, deckPriority, shuffleKey
-                    FROM words ORDER BY id
-                    """.trimIndent(),
-                    null,
-                ).use { cursor ->
-                    while (cursor.moveToNext()) {
-                        words += WordEntity(
-                            id = cursor.getLong(0),
-                            headword = cursor.getString(1),
-                            phoneticUs = cursor.getStringOrNull(2),
-                            phoneticUk = cursor.getStringOrNull(3),
-                            transCn = cursor.getStringOrNull(4),
-                            transEn = cursor.getStringOrNull(5),
-                            examplesJson = cursor.getStringOrNull(6),
-                            phrasesJson = cursor.getStringOrNull(7),
-                            rank = cursor.getInt(8),
-                            deck = cursor.getString(9),
-                            deckPriority = cursor.getInt(10),
-                            shuffleKey = cursor.getInt(11),
-                        )
-                    }
+            when {
+                exists == 0L -> {
+                    val count = fullImport(onProgress)
+                    if (assetSize != null) marker.writeText(assetSize.toString())
+                    count
                 }
-            }
-            tmp.delete()
 
-            db.withTransaction {
-                words.chunked(BATCH).forEachIndexed { index, chunk ->
-                    db.wordDao().insertAll(chunk)
-                    onProgress(((index + 1) * BATCH).coerceAtMost(words.size))
+                assetSize != null && knownVersion != assetSize -> {
+                    val count = refreshFromAsset(onProgress)
+                    marker.writeText(assetSize.toString())
+                    Log.i(TAG, "词书已升级到新版本，刷新了 " + count + " 条词的详情（复习进度未受影响）")
+                    count
                 }
+
+                else -> exists.toInt()
             }
-            Log.i(TAG, "词书导入完成，共 " + words.size + " 个词")
-            words.size
         }
+
+    /** 全量导入（首次启动） */
+    private suspend fun fullImport(onProgress: suspend (Int) -> Unit): Int {
+        val words = readAssetWords()
+        db.withTransaction {
+            words.chunked(BATCH).forEachIndexed { index, chunk ->
+                db.wordDao().insertAll(chunk)
+                onProgress(((index + 1) * BATCH).coerceAtMost(words.size))
+            }
+        }
+        Log.i(TAG, "词书导入完成，共 " + words.size + " 个词")
+        return words.size
+    }
+
+    /**
+     * 增量刷新：按 id 更新已有词条的详情字段，新增的词直接插入。
+     * 因为构建脚本给 id 的分配是确定的（按词书顺序），所以已有卡片的 wordId 依然有效。
+     */
+    private suspend fun refreshFromAsset(onProgress: suspend (Int) -> Unit): Int {
+        val words = readAssetWords()
+        val existingIds = db.wordDao().allIds().toHashSet()
+        db.withTransaction {
+            words.forEachIndexed { index, word ->
+                val dao = db.wordDao()
+                if (existingIds.contains(word.id)) {
+                    dao.updateDetails(
+                        id = word.id,
+                        headword = word.headword,
+                        phoneticUs = word.phoneticUs,
+                        phoneticUk = word.phoneticUk,
+                        transCn = word.transCn,
+                        transEn = word.transEn,
+                        examplesJson = word.examplesJson,
+                        phrasesJson = word.phrasesJson,
+                        remMethod = word.remMethod,
+                        synoJson = word.synoJson,
+                        relWordJson = word.relWordJson,
+                    )
+                } else {
+                    dao.insertAll(listOf(word))
+                }
+                if (index % BATCH == 0) onProgress(index)
+            }
+        }
+        return words.size
+    }
+
+    private fun readAssetWords(): List<WordEntity> {
+        val tmp = copyAssetToCache(WORDS_ASSET)
+        val words = mutableListOf<WordEntity>()
+        val sqlite = SQLiteDatabase.openDatabase(tmp.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+        sqlite.use { file ->
+            file.rawQuery("SELECT " + columns + " FROM words ORDER BY id", null).use { cursor ->
+                while (cursor.moveToNext()) {
+                    words += WordEntity(
+                        id = cursor.getLong(0),
+                        headword = cursor.getString(1),
+                        phoneticUs = cursor.getStringOrNull(2),
+                        phoneticUk = cursor.getStringOrNull(3),
+                        transCn = cursor.getStringOrNull(4),
+                        transEn = cursor.getStringOrNull(5),
+                        examplesJson = cursor.getStringOrNull(6),
+                        phrasesJson = cursor.getStringOrNull(7),
+                        rank = cursor.getInt(8),
+                        deck = cursor.getString(9),
+                        deckPriority = cursor.getInt(10),
+                        shuffleKey = cursor.getInt(11),
+                        remMethod = cursor.getStringOrNull(12),
+                        synoJson = cursor.getStringOrNull(13),
+                        relWordJson = cursor.getStringOrNull(14),
+                    )
+                }
+            }
+        }
+        tmp.delete()
+        return words
+    }
 
     /**
      * 离线词典：拷贝到 filesDir/dict/dict.db。assets 文件体积变化时自动重新拷贝，
@@ -89,8 +155,7 @@ class AssetImporter @Inject constructor(
         val dir = File(context.filesDir, "dict").apply { mkdirs() }
         val target = File(dir, "dict.db")
         val marker = File(dir, "dict.version")
-        // build.gradle.kts 里对 "db" 设置了 noCompress，正常情况下 openFd 一定能拿到长度；
-        // 万一拿不到（自定义打包方式），退化为“文件不存在时才拷贝”，不会每次启动都重复拷贝
+        // build.gradle.kts 里对 "db" 设置了 noCompress，正常情况下 openFd 一定能拿到长度
         val assetSize = runCatching { context.assets.openFd(DICT_ASSET).use { it.length } }.getOrNull()
         val current = if (marker.exists()) marker.readText().trim().toLongOrNull() else null
         val needCopy = !target.exists() || (assetSize != null && current != assetSize)
