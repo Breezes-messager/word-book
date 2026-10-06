@@ -205,6 +205,7 @@ WorkManager 周期任务，`initialDelay` 计算到下一个设定时刻；到�
 | ![词形还原](docs/screenshots/09-词形还原.png) | `actioned`（词典没收录）→ 还原成 `action`，并提示「词形还原：actioned -> action」 |
 | ![断网缓存](docs/screenshots/08-断网显示缓存文章.png) | 飞行模式下学习、查词照常；文章显示「当前为 10 月 5 日缓存的内容」 |
 | ![统计](docs/screenshots/07-学习统计.png) | 累计学词 / 连续打卡 / 30 天打卡条 / 卡片状态分布 |
+| ![生成的文章](docs/screenshots/10-DeepSeek生成的文章.png) | **DeepSeek 真实生成**（`POST /chat/completions 200`）：4 段 158 词，5 个目标词全部高亮 |
 
 关键日志与数据（从设备上直接读出来的，不是推测）：
 
