@@ -1,0 +1,11 @@
+# 统一换行符，避免 Windows / Linux 互相改动时产生整文件 diff 噪音
+* text=auto eol=lf
+*.bat text eol=crlf
+gradlew text eol=lf
+
+# 二进制文件不做换行符转换
+*.png binary
+*.jpg binary
+*.jar binary
+*.zip binary
+*.apk binary

@@ -1,0 +1,346 @@
+{
+ "generatedBy": "py-fsrs (open-spaced-repetition) Scheduler(enable_fuzzing=False)",
+ "note": "间隔单位为秒；stability/difficulty 为复习后的值",
+ "scenarios": [
+  {
+   "name": "新卡连评良好",
+   "reviews": [
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 1,
+     "stepAfter": 1,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.118103970459,
+     "intervalSeconds": 600,
+     "dueAfter": "2026-01-01T09:10:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 1,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.111214235785,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:01:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 1440,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 7.31918609784,
+     "difficultyAfter": 2.104331390846,
+     "intervalSeconds": 604800,
+     "dueAfter": "2026-01-09T09:01:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 4320,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 19.846984845265,
+     "difficultyAfter": 2.097455428752,
+     "intervalSeconds": 1728000,
+     "dueAfter": "2026-01-25T09:01:00+00:00"
+    }
+   ]
+  },
+  {
+   "name": "新卡评重来后重学",
+   "reviews": [
+    {
+     "rating": 1,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 1,
+     "stepAfter": 0,
+     "stabilityAfter": 0.212,
+     "difficultyAfter": 6.4133,
+     "intervalSeconds": 60,
+     "dueAfter": "2026-01-01T09:01:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 1,
+     "stateAfter": 1,
+     "stepAfter": 1,
+     "stabilityAfter": 0.246689187776,
+     "difficultyAfter": 6.402115069297,
+     "intervalSeconds": 600,
+     "dueAfter": "2026-01-01T09:11:00+00:00"
+    },
+    {
+     "rating": 1,
+     "elapsedMinutesFromPrevious": 1440,
+     "stateAfter": 1,
+     "stepAfter": 0,
+     "stabilityAfter": 0.113367227472,
+     "difficultyAfter": 8.802628058192,
+     "intervalSeconds": 60,
+     "dueAfter": "2026-01-02T09:02:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 10,
+     "stateAfter": 1,
+     "stepAfter": 1,
+     "stabilityAfter": 0.137464133922,
+     "difficultyAfter": 8.789053799431,
+     "intervalSeconds": 600,
+     "dueAfter": "2026-01-02T09:21:00+00:00"
+    }
+   ]
+  },
+  {
+   "name": "四档各不相同",
+   "reviews": [
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 1,
+     "stepAfter": 1,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.118103970459,
+     "intervalSeconds": 600,
+     "dueAfter": "2026-01-01T09:10:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 1,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.111214235785,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:01:00+00:00"
+    },
+    {
+     "rating": 2,
+     "elapsedMinutesFromPrevious": 1440,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 5.321129419241,
+     "difficultyAfter": 4.748284761595,
+     "intervalSeconds": 432000,
+     "dueAfter": "2026-01-07T09:01:00+00:00"
+    },
+    {
+     "rating": 4,
+     "elapsedMinutesFromPrevious": 5000,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 21.758836451545,
+     "difficultyAfter": 2.978634628146,
+     "intervalSeconds": 1900800,
+     "dueAfter": "2026-01-27T20:21:00+00:00"
+    },
+    {
+     "rating": 1,
+     "elapsedMinutesFromPrevious": 20000,
+     "stateAfter": 3,
+     "stepAfter": 0,
+     "stabilityAfter": 1.979174162202,
+     "difficultyAfter": 7.677353316853,
+     "intervalSeconds": 600,
+     "dueAfter": "2026-01-19T17:51:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 10,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 1.98821121141,
+     "difficultyAfter": 7.664904332833,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-21T17:51:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 1440,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 3.867317378116,
+     "difficultyAfter": 7.652467797797,
+     "intervalSeconds": 345600,
+     "dueAfter": "2026-01-24T17:51:00+00:00"
+    }
+   ]
+  },
+  {
+   "name": "简单直接跳到复习",
+   "reviews": [
+    {
+     "rating": 4,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 8.2956,
+     "difficultyAfter": 1.0,
+     "intervalSeconds": 691200,
+     "dueAfter": "2026-01-09T09:00:00+00:00"
+    },
+    {
+     "rating": 4,
+     "elapsedMinutesFromPrevious": 100000,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 192.163849266256,
+     "difficultyAfter": 1.0,
+     "intervalSeconds": 16588800,
+     "dueAfter": "2026-09-19T19:40:00+00:00"
+    }
+   ]
+  },
+  {
+   "name": "困难连续",
+   "reviews": [
+    {
+     "rating": 2,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 1,
+     "stepAfter": 0,
+     "stabilityAfter": 1.2931,
+     "difficultyAfter": 5.112170705601,
+     "intervalSeconds": 330,
+     "dueAfter": "2026-01-01T09:05:30+00:00"
+    },
+    {
+     "rating": 2,
+     "elapsedMinutesFromPrevious": 1,
+     "stateAfter": 1,
+     "stepAfter": 0,
+     "stabilityAfter": 1.2931,
+     "difficultyAfter": 6.74045951083,
+     "intervalSeconds": 330,
+     "dueAfter": "2026-01-01T09:06:30+00:00"
+    },
+    {
+     "rating": 2,
+     "elapsedMinutesFromPrevious": 1440,
+     "stateAfter": 1,
+     "stepAfter": 0,
+     "stabilityAfter": 2.708390552672,
+     "difficultyAfter": 7.821393497999,
+     "intervalSeconds": 330,
+     "dueAfter": "2026-01-02T09:06:30+00:00"
+    },
+    {
+     "rating": 2,
+     "elapsedMinutesFromPrevious": 1440,
+     "stateAfter": 1,
+     "stepAfter": 0,
+     "stabilityAfter": 3.784180394206,
+     "difficultyAfter": 8.538967850205,
+     "intervalSeconds": 330,
+     "dueAfter": "2026-01-03T09:06:30+00:00"
+    }
+   ]
+  },
+  {
+   "name": "连续十次良好",
+   "reviews": [
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 1,
+     "stepAfter": 1,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.118103970459,
+     "intervalSeconds": 600,
+     "dueAfter": "2026-01-01T09:10:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.111214235785,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.104331390846,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.097455428752,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.090586342621,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.083724125575,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.076868770746,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.070020271272,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.063178620298,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    },
+    {
+     "rating": 3,
+     "elapsedMinutesFromPrevious": 0,
+     "stateAfter": 2,
+     "stepAfter": null,
+     "stabilityAfter": 2.3065,
+     "difficultyAfter": 2.056343810974,
+     "intervalSeconds": 172800,
+     "dueAfter": "2026-01-03T09:00:00+00:00"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  只备份业务数据库（学习进度）。
+  注意 DataStore 的 API Key 存在 files/datastore 下，没有被 include，
+  所以不会进入备份——这符合“API Key 不外传”的要求。
+-->
+<full-backup-content>
+    <include domain="database" path="." />
+</full-backup-content>
