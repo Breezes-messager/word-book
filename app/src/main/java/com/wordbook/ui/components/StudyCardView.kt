@@ -183,7 +183,7 @@ fun StudyCardView(
     }
 }
 
-/** 根据拖动方向判断要打的分 */
+/** 根据拖动方向判断要打的分：右滑 = 良好，左滑 = 重来 */
 private fun ratingFor(dx: Float, dy: Float, threshold: Float): Rating? {
     if (kotlin.math.abs(dx) < threshold && kotlin.math.abs(dy) < threshold) return null
     return if (kotlin.math.abs(dx) > kotlin.math.abs(dy)) {
