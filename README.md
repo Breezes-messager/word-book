@@ -80,8 +80,8 @@ app/src/main/assets/dict.db    离线词典（约 1.9 万条 + 1.2 万条词形�
 
 ```bash
 ./gradlew :app:assembleDebug
-# 产物：app/build/outputs/apk/debug/app-debug.apk
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+# 产物：app/build/outputs/apk/debug/背单词-v1.0.4-debug.apk
+adb install -r "app/build/outputs/apk/debug/背单词-v1.0.4-debug.apk"
 ```
 
 ### 4. 首次启动
@@ -278,8 +278,11 @@ python tools/verify/generate_fsrs_golden.py
 
 | 产物 | 大小 | 说明 |
 |------|------|------|
-| `app/build/outputs/apk/debug/app-debug.apk` | **23.3 MB** | 可直接安装（debug 签名） |
-| `app/build/outputs/apk/release/app-release-unsigned.apk` | **12.9 MB** | 已开启 R8 混淆 + 资源压缩，需自己签名后才能安装 |
+| `app/build/outputs/apk/debug/背单词-v1.0.4-debug.apk` | **22.0 MB** | 可直接安装（debug 签名） |
+| `app/build/outputs/apk/release/背单词-v1.0.4-release.apk` | **12.2 MB** | 已开启 R8 混淆 + 资源压缩，**未签名**，需自己签名后才能安装 |
+
+> APK 文件名由 `app/build.gradle.kts` 自动生成，格式 `背单词-v<versionName>-<buildType>.apk`，
+> 改 `versionName` 后文件名会跟着变，不会出现"文件叫 1.0.3、里面是 1.0.4"的情况。
 
 两者都远低于 50 MB 的体积目标；APK 内 `assets/words.db`(4.1 MB) 与 `assets/dict.db`(6.5 MB) 以**未压缩**方式存放（`noCompress += "db"`），首次启动才能用 `openFd()` 读取体积并快速解压。
 
@@ -353,6 +356,10 @@ git show v1.0.0 --stat          # 某个版本改了什么
 2. 在 `CHANGELOG.md` 顶部加一段本次改动
 3. `git add -A && git commit -m "v1.1.0: ..." && git tag -a v1.1.0 -m "v1.1.0"`
 4. `./gradlew :app:assembleDebug` 出包
+
+出来的文件会自动带上版本号，例如 `app/build/outputs/apk/debug/背单词-v1.0.4-debug.apk`；
+应用内「设置」页底部也会显示同一个版本号（读的是 `BuildConfig.VERSION_NAME`），
+加上 git tag，三处永远一致。
 
 **不会入库的东西**（原因见 `.gitignore` 里的注释）：
 

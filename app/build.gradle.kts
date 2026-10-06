@@ -16,8 +16,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // 发新版本时：versionCode 每次 +1（商店 / 安装升级用），versionName 用语义化版本号
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 词库导入时需要较大的游标窗口
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
@@ -75,6 +75,24 @@ android {
 
     lint {
         abortOnError = false
+    }
+}
+
+// APK 文件名带上版本号，一眼就能看出是哪个版本：
+//   debug   -> app/build/outputs/apk/debug/背单词-v1.0.4-debug.apk
+//   release -> app/build/outputs/apk/release/背单词-v1.0.4-release.apk
+//
+// 说明：AGP 8.7 的 VariantOutput 只公开了 versionName，没有公开改名用的
+// outputFileName（只有内部的 BaseVariantOutputImpl 有），所以这里用经典的
+// applicationVariants + outputs.all 来改名。AGP 9 若移除该 API 需改用复制任务。
+@Suppress("DEPRECATION")
+android {
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+                "背单词-v" + variant.versionName + "-" + variant.buildType.name + ".apk"
+        }
     }
 }
 
