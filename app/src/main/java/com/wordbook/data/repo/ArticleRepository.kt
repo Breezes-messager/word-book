@@ -59,7 +59,6 @@ class ArticleRepository @Inject constructor(
         regenerate: Boolean = false,
         onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
     ): GenerationReport {
-        if (regenerate) articleDao.deleteByDay(todayKey())
         val settings = settingsRepository.current()
         val todayWords = todayStudiedWords()
         val batches = planBatches(todayWords)
@@ -76,7 +75,9 @@ class ArticleRepository @Inject constructor(
             .filter { it.headword.lowercase() !in todayTargets }
             .map { it.headword }
 
-        val saved = mutableListOf<ArticleEntity>()
+        // 重要：先把所有篇都生成出来，成功了再替换今天的旧文章。
+        // 否则「重新生成」一旦断网失败，用户连原来那篇缓存都没了。
+        val generated = mutableListOf<Pair<ArticleContent, List<WordEntity>>>()
         var failed = 0
         var lastError: String? = null
 
@@ -88,8 +89,7 @@ class ArticleRepository @Inject constructor(
                     knownWords = known,
                     style = settings.articleStyle,
                 )
-                val entity = saveArticle(content, batch, settings.articleStyle.label, index)
-                saved += entity
+                generated += content to batch
             } catch (t: Throwable) {
                 failed++
                 lastError = t.message ?: t.javaClass.simpleName
@@ -97,6 +97,15 @@ class ArticleRepository @Inject constructor(
             onProgress(index + 1, batches.size)
         }
 
+        if (generated.isEmpty()) {
+            // 一篇都没成功：保留旧文章，只把错误抛给界面
+            return GenerationReport(0, emptyList(), lastError, failed)
+        }
+
+        if (regenerate) articleDao.deleteByDay(todayKey())
+        val saved = generated.mapIndexed { index, (content, batch) ->
+            saveArticle(content, batch, settings.articleStyle.label, index)
+        }
         return GenerationReport(saved.size, saved, lastError, failed)
     }
 

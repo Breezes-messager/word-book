@@ -206,6 +206,7 @@ WorkManager 周期任务，`initialDelay` 计算到下一个设定时刻；到�
 | ![断网缓存](docs/screenshots/08-断网显示缓存文章.png) | 飞行模式下学习、查词照常；文章显示「当前为 10 月 5 日缓存的内容」 |
 | ![统计](docs/screenshots/07-学习统计.png) | 累计学词 / 连续打卡 / 30 天打卡条 / 卡片状态分布 |
 | ![生成的文章](docs/screenshots/10-DeepSeek生成的文章.png) | **DeepSeek 真实生成**（`POST /chat/completions 200`）：4 段 158 词，5 个目标词全部高亮 |
+| ![生成失败降级](docs/screenshots/11-生成失败降级.png) | 断网点「重新生成」：中文错误提示 + 重试按钮，**上一篇缓存原样保留** |
 
 关键日志与数据（从设备上直接读出来的，不是推测）：
 
