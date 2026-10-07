@@ -1,0 +1,142 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #08182C; font-family: "Microsoft YaHei", sans-serif; }
+.board { padding: 28px 34px 34px; }
+.head { margin-bottom: 18px; }
+.name { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+.desc { font-size: 14px; opacity: .62; margin-top: 4px; }
+.row { display: flex; gap: 26px; }
+.phone { width: 360px; height: 760px; border-radius: 26px; overflow: hidden; display: flex; flex-direction: column; }
+.screen { flex: 1; overflow: hidden; padding: 16px 18px; }
+.status { height: 26px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 11px; }
+
+.board { color: #DCE9F7; }
+.phone { background: #0F2440; border: 1px solid #1E3A5F; border-radius: 6px;
+         box-shadow: 0 12px 30px rgba(0,20,45,.6); }
+.status { color: #6C90B8; font-family: Consolas, monospace; }
+.h-title { font-family: Consolas, monospace; font-size: 14px; letter-spacing: 4px; color: #6C90B8;
+           border-bottom: 1px dashed #2A4C78; padding-bottom: 8px; margin-bottom: 16px; text-transform: uppercase; }
+.metric { margin-bottom: 16px; }
+.metric-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: #8FB2D6; }
+.metric-top b { font-family: Consolas, monospace; font-size: 18px; color: #EAF3FF; }
+.bar { height: 6px; background: #16304F; margin-top: 7px; position: relative; border: 1px solid #24507F; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; background: repeating-linear-gradient(90deg,#4FC3F7,#4FC3F7 4px,#2E9FD4 4px,#2E9FD4 8px); }
+.bar i[style*="0%"] { background: transparent; }
+.hint { font-family: Consolas, monospace; font-size: 11px; color: #6C90B8; margin: 14px 0 18px; }
+.btn-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.btn { flex: 1; text-align: center; padding: 11px 0; font-size: 13.5px; border: 1px dashed #4FC3F7; color: #9FD9F7;
+       border-radius: 999px; font-family: Consolas, monospace; }
+.btn.primary { background: #4FC3F7; border-style: solid; border-color: #4FC3F7; color: #06243D; font-weight: 700; }
+.btn.wide { display: block; margin-bottom: 18px; }
+.card { border: 1px dashed #2A4C78; padding: 12px 14px; background: #12294A; border-radius: 4px; }
+.tag { font-family: Consolas, monospace; font-size: 10.5px; color: #FFD166; letter-spacing: 1.5px; }
+.card-title { font-size: 16.5px; line-height: 1.35; margin: 6px 0 4px; color: #EAF3FF; }
+.card-sub { font-size: 11.5px; color: #6C90B8; font-family: Consolas, monospace; }
+.section { display: flex; justify-content: space-between; font-size: 13.5px; margin: 18px 0 2px;
+           border-bottom: 1px dashed #2A4C78; padding-bottom: 6px; font-family: Consolas, monospace; color: #9FD9F7; }
+.more { color: #FFD166; font-size: 11.5px; }
+.list-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px dashed #1E3A5F; }
+.word { font-size: 19px; font-weight: 700; color: #EAF3FF; }
+.ph { font-size: 11.5px; color: #6C90B8; font-family: Consolas, monospace; }
+.cn { font-size: 11.5px; color: #8FB2D6; margin-top: 2px; }
+.play { color: #4FC3F7; font-size: 13px; }
+.nav { height: 52px; display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #1E3A5F;
+       font-size: 11.5px; color: #6C90B8; background: #0C1D34; font-family: Consolas, monospace; }
+.nav .on { color: #4FC3F7; font-weight: 700; }
+.study-top { display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; margin-bottom: 14px; color: #8FB2D6; }
+.count { font-family: Consolas, monospace; color: #4FC3F7; }
+.wordcard { border: 1px solid #24507F; background: #12294A; padding: 24px 20px; border-radius: 6px;
+            background-image: linear-gradient(#1B3A61 1px, transparent 1px), linear-gradient(90deg,#1B3A61 1px, transparent 1px);
+            background-size: 22px 22px; }
+.bigword { font-size: 42px; font-weight: 800; color: #EAF3FF; letter-spacing: -.5px; }
+.bigph { color: #6C90B8; margin: 6px 0 18px; font-family: Consolas, monospace; }
+.pos { font-size: 14px; margin-bottom: 6px; color: #C6DAF0; }
+.quote { font-size: 13.5px; margin-top: 18px; padding-left: 12px; border-left: 2px solid #FFD166; color: #8FB2D6; }
+.quote-cn { font-size: 11.5px; color: #6C90B8; padding-left: 12px; margin-top: 4px; }
+
+.ratings { display: flex; gap: 8px; margin-top: 20px; }
+.rate { flex: 1; text-align: center; padding: 11px 0; font-size: 13px; line-height: 1.5; border-radius: 999px; }
+.rate b { display: block; font-size: 10px; font-weight: 400; }
+
+.rate { border: 1px solid #2A4C78; color: #9FD9F7; background: #12294A; }
+.rate b { color: #6C90B8; font-family: Consolas, monospace; }
+.rate.r1 { border-color: #F0616D; color: #F0616D; }
+.rate.r2 { border-color: #FFD166; color: #FFD166; }
+.rate.r3 { background: #4FC3F7; border-color: #4FC3F7; color: #06243D; font-weight: 700; }
+.rate.r4 { border-color: #8FB2D6; color: #8FB2D6; }
+.a-title { font-size: 22px; line-height: 1.3; color: #EAF3FF; font-weight: 800; }
+.a-sub { font-size: 12.5px; color: #6C90B8; margin: 6px 0 16px; font-family: Consolas, monospace; }
+.para { font-size: 14.5px; line-height: 1.95; margin-bottom: 14px; color: #C6DAF0; }
+mark { background: rgba(79,195,247,.16); color: #9FD9F7; font-weight: 700; border-bottom: 1px solid #4FC3F7; }
+
+</style></head><body>
+<div class="board">
+  <div class="head">
+    <div class="name">J · 蓝图</div>
+    <div class="desc">深蓝底 · 虚线网格 · 等宽数字 · 刻度进度 —— 理性/工程感</div>
+  </div>
+  <div class="row">
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen home">
+        <div class="h-title">今日任务</div>
+        <div class="metric">
+          <div class="metric-top"><span>新词</span><b>29 / 70</b></div>
+          <div class="bar"><i style="width:41%"></i></div>
+        </div>
+        <div class="metric">
+          <div class="metric-top"><span>待复习</span><b>21 个</b></div>
+          <div class="bar"><i style="width:0%"></i></div>
+        </div>
+        <div class="hint">连续打卡 1 天 · 词库共 5046 词</div>
+        <div class="btn-row"><div class="btn primary">开始学习</div><div class="btn">开始复习</div></div>
+        <div class="btn wide">&#9654;&nbsp; 今日文章</div>
+        <div class="card article-card">
+          <div class="tag">最近生成的文章</div>
+          <div class="card-title">A Journey of Discovery in a Small Group</div>
+          <div class="card-sub">2026-10-06 · 小群体中的发现之旅</div>
+        </div>
+        <div class="section">词书预览（前 20 个词）<span class="more">查看全部</span></div>
+        <div class="list-row"><div><div class="word">paragraph</div><div class="ph">/'pærəgræf/</div><div class="cn">n. 段落;短评;段落符号</div></div><div class="play">&#9654;</div></div>
+      </div>
+      <div class="nav"><span class="on">首页</span><span>文章</span><span>统计</span><span>设置</span></div>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen study">
+        <div class="study-top"><span>&#10005;</span><span>学习新词</span><span class="count">3 / 20</span></div>
+        <div class="wordcard">
+          <div class="bigword">paragraph</div>
+          <div class="bigph">/'pærəgræf/</div>
+          <div class="pos">n. 段落;短评;段落符号</div>
+          <div class="pos">v. 将…分段</div>
+          <div class="quote">the opening paragraphs of the novel</div>
+          <div class="quote-cn">小说开篇的几个段落</div>
+        </div>
+        <div class="ratings">
+          <div class="rate r1">重来<b>1 分钟</b></div>
+          <div class="rate r2">困难<b>6 分钟</b></div>
+          <div class="rate r3">良好<b>10 分钟</b></div>
+          <div class="rate r4">简单<b>8 天</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen article">
+        <div class="a-title">A Journey of Discovery in a Small Group</div>
+        <div class="a-sub">小群体中的发现之旅</div>
+        <p class="para">Last week I read a short <mark>paragraph</mark> about a famous scientist.
+        It was not long, but it had a deep <mark>influence</mark> on me.</p>
+        <p class="para">The paragraph described how the scientist used his
+        <mark>intellectual</mark> power to solve a problem that many people thought was too hard.</p>
+        <div class="btn wide">显示中文翻译</div>
+        <div class="hint">风格：小故事 · 生成时间：2026 年 10 月 6 日 09:03</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

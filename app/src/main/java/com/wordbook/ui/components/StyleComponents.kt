@@ -175,7 +175,7 @@ private fun RowScope.RatingChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(if (LocalAppStyle.current.cardCorner >= 16) 16.dp else 0.dp)
+    val shape = RoundedCornerShape(LocalAppStyle.current.ratingCorner.dp)
     Box(modifier = modifier) {
         if (style.hardShadow) {
             Box(

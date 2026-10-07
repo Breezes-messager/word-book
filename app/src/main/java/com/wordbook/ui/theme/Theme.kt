@@ -57,7 +57,7 @@ private val DarkColors = darkColorScheme(
 /**
  * 主题入口。风格由「设置 → 界面风格」决定，切换后立即生效：
  *  - SYSTEM：Material You 动态取色，跟随系统深浅色
- *  - INK / MIDNIGHT / MINT / MARKER：四套固定外观（颜色 / 圆角 / 字体 / 卡片样式都不同）
+ *  - 其余各套：固定外观（颜色 / 圆角 / 字体 / 卡片样式都不同），定义见 ui/theme/AppStyles.kt
  *
  * 组件通过 [LocalAppStyle] 读取风格令牌（卡片描边、进度条、评分按钮、高亮等）。
  */
@@ -72,7 +72,8 @@ fun WordBookTheme(
     val context = LocalContext.current
     // 最终深浅：风格的硬性限制 > 用户设置 > 系统
     val effectiveDark = when {
-        style == UiStyle.MIDNIGHT -> true
+        // 暗夜专注 / 霓虹夜 / 蓝图 / 森林 本身就是深色风格，忽略深浅模式设置
+        style.forceDark -> true
         darkMode == DarkModeSetting.DARK -> true
         darkMode == DarkModeSetting.LIGHT -> false
         else -> systemDark

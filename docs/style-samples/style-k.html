@@ -1,0 +1,141 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #EDE4D2; font-family: "Microsoft YaHei", sans-serif; }
+.board { padding: 28px 34px 34px; }
+.head { margin-bottom: 18px; }
+.name { font-size: 26px; font-weight: 700; letter-spacing: .5px; }
+.desc { font-size: 14px; opacity: .62; margin-top: 4px; }
+.row { display: flex; gap: 26px; }
+.phone { width: 360px; height: 760px; border-radius: 26px; overflow: hidden; display: flex; flex-direction: column; }
+.screen { flex: 1; overflow: hidden; padding: 16px 18px; }
+.status { height: 26px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 11px; }
+
+.board { color: #4A3B2A; }
+.phone { background: #FFFDF5; border-radius: 22px; box-shadow: 0 12px 30px rgba(120,95,50,.20); }
+.status { color: #A08C6E; }
+.h-title { font-family: "STKaiti","KaiTi",serif; font-size: 27px; font-weight: 700; color: #C4642F; margin-bottom: 14px;
+           text-decoration: underline; text-decoration-style: wavy; text-decoration-color: #E8C9A0; }
+.metric { margin-bottom: 14px; }
+.metric-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; color: #7A6752; }
+.metric-top b { font-size: 18px; color: #4A3B2A; font-weight: 800; }
+.bar { height: 12px; background: #F4EAD5; border-radius: 999px; margin-top: 6px; position: relative; overflow: hidden; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #E8B04B; border-radius: 999px; }
+.bar i[style*="0%"] { background: transparent; }
+.hint { font-size: 11.5px; color: #A08C6E; margin: 12px 0 16px; }
+.btn-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.btn { flex: 1; text-align: center; padding: 12px 0; font-size: 13.5px; border: 2px solid #E8C9A0; color: #8A5A2B;
+       border-radius: 999px; font-weight: 700; background: #FFF8E6; }
+.btn.primary { background: #C4642F; border-color: #C4642F; color: #FFF6E8; }
+.btn.wide { display: block; margin-bottom: 16px; }
+.card { background: #FFF6C9; border-radius: 6px; padding: 13px 15px; box-shadow: 2px 3px 0 #E4D5A8;
+        transform: rotate(-.6deg); }
+.tag { font-size: 10.5px; color: #B08A2E; font-weight: 700; letter-spacing: 1px; }
+.card-title { font-family: "STKaiti","KaiTi",serif; font-size: 17.5px; line-height: 1.35; margin: 6px 0 4px; color: #4A3B2A; }
+.card-sub { font-size: 11.5px; color: #A08C6E; }
+.section { display: flex; justify-content: space-between; font-size: 14px; margin: 18px 0 4px;
+           font-family: "STKaiti","KaiTi",serif; font-weight: 700; color: #C4642F; }
+.more { color: #C4642F; font-size: 12px; font-family: "Microsoft YaHei",sans-serif; }
+.list-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 2px dotted #EFE0C2; }
+.word { font-size: 19px; font-weight: 800; color: #4A3B2A; }
+.ph { font-size: 11.5px; color: #A08C6E; }
+.cn { font-size: 11.5px; color: #7A6752; margin-top: 2px; }
+.play { color: #C4642F; font-size: 13px; }
+.nav { height: 54px; display: flex; align-items: center; justify-content: space-around; border-top: 2px solid #F4EAD5;
+       font-size: 12px; color: #A08C6E; background: #FFFBF0; }
+.nav .on { color: #C4642F; font-weight: 700; }
+.study-top { display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; margin-bottom: 14px; color: #7A6752; }
+.count { color: #C4642F; font-weight: 700; }
+.wordcard { background: #FFF6C9; border-radius: 8px; padding: 24px 20px; box-shadow: 3px 4px 0 #E4D5A8; transform: rotate(-.5deg); }
+.bigword { font-size: 42px; font-weight: 800; color: #4A3B2A; letter-spacing: -.5px; }
+.bigph { color: #A08C6E; margin: 6px 0 18px; font-size: 13px; }
+.pos { font-size: 14px; margin-bottom: 6px; color: #5C4A34; }
+.quote { font-family: "STKaiti","KaiTi",serif; font-size: 15px; margin-top: 16px; padding-left: 12px;
+         border-left: 3px solid #E8B04B; color: #7A6752; }
+.quote-cn { font-size: 11.5px; color: #A08C6E; padding-left: 12px; margin-top: 4px; }
+
+.ratings { display: flex; gap: 8px; margin-top: 20px; }
+.rate { flex: 1; text-align: center; padding: 11px 0; font-size: 13px; line-height: 1.5; border-radius: 999px; }
+.rate b { display: block; font-size: 10px; font-weight: 400; }
+
+.rate { border-radius: 999px; color: #fff; font-weight: 700; }
+.rate b { color: rgba(255,255,255,.85); }
+.rate.r1 { background: #E07A6B; }
+.rate.r2 { background: #E8B04B; }
+.rate.r3 { background: #7FAF7A; }
+.rate.r4 { background: #7FA6C9; }
+.a-title { font-family: "STKaiti","KaiTi",serif; font-size: 25px; line-height: 1.3; color: #4A3B2A; }
+.a-sub { font-size: 12.5px; color: #A08C6E; margin: 6px 0 16px; }
+.para { font-size: 15px; line-height: 1.95; margin-bottom: 14px; color: #5C4A34; }
+mark { background: #FFE9A8; color: #8A5A2B; font-weight: 700; border-radius: 4px; padding: 0 2px; }
+
+</style></head><body>
+<div class="board">
+  <div class="head">
+    <div class="name">K · 便签</div>
+    <div class="desc">奶油黄便签 · 楷体 · 手写波浪线 · 纸片斜贴 —— 轻松不严肃</div>
+  </div>
+  <div class="row">
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen home">
+        <div class="h-title">今日任务</div>
+        <div class="metric">
+          <div class="metric-top"><span>新词</span><b>29 / 70</b></div>
+          <div class="bar"><i style="width:41%"></i></div>
+        </div>
+        <div class="metric">
+          <div class="metric-top"><span>待复习</span><b>21 个</b></div>
+          <div class="bar"><i style="width:0%"></i></div>
+        </div>
+        <div class="hint">连续打卡 1 天 · 词库共 5046 词</div>
+        <div class="btn-row"><div class="btn primary">开始学习</div><div class="btn">开始复习</div></div>
+        <div class="btn wide">&#9654;&nbsp; 今日文章</div>
+        <div class="card article-card">
+          <div class="tag">最近生成的文章</div>
+          <div class="card-title">A Journey of Discovery in a Small Group</div>
+          <div class="card-sub">2026-10-06 · 小群体中的发现之旅</div>
+        </div>
+        <div class="section">词书预览（前 20 个词）<span class="more">查看全部</span></div>
+        <div class="list-row"><div><div class="word">paragraph</div><div class="ph">/'pærəgræf/</div><div class="cn">n. 段落;短评;段落符号</div></div><div class="play">&#9654;</div></div>
+      </div>
+      <div class="nav"><span class="on">首页</span><span>文章</span><span>统计</span><span>设置</span></div>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen study">
+        <div class="study-top"><span>&#10005;</span><span>学习新词</span><span class="count">3 / 20</span></div>
+        <div class="wordcard">
+          <div class="bigword">paragraph</div>
+          <div class="bigph">/'pærəgræf/</div>
+          <div class="pos">n. 段落;短评;段落符号</div>
+          <div class="pos">v. 将…分段</div>
+          <div class="quote">the opening paragraphs of the novel</div>
+          <div class="quote-cn">小说开篇的几个段落</div>
+        </div>
+        <div class="ratings">
+          <div class="rate r1">重来<b>1 分钟</b></div>
+          <div class="rate r2">困难<b>6 分钟</b></div>
+          <div class="rate r3">良好<b>10 分钟</b></div>
+          <div class="rate r4">简单<b>8 天</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>18:43</span><span class="dots">5G &nbsp; &#9679;&#9679;&#9679;</span></div>
+      <div class="screen article">
+        <div class="a-title">A Journey of Discovery in a Small Group</div>
+        <div class="a-sub">小群体中的发现之旅</div>
+        <p class="para">Last week I read a short <mark>paragraph</mark> about a famous scientist.
+        It was not long, but it had a deep <mark>influence</mark> on me.</p>
+        <p class="para">The paragraph described how the scientist used his
+        <mark>intellectual</mark> power to solve a problem that many people thought was too hard.</p>
+        <div class="btn wide">显示中文翻译</div>
+        <div class="hint">风格：小故事 · 生成时间：2026 年 10 月 6 日 09:03</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -16,8 +16,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // 发新版本时：versionCode 每次 +1（商店 / 安装升级用），versionName 用语义化版本号
-        versionCode = 18
-        versionName = "1.5.1"
+        versionCode = 19
+        versionName = "1.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 词库导入时需要较大的游标窗口
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }

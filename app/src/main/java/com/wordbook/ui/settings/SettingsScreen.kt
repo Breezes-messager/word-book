@@ -113,12 +113,35 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
-            UiStyle.entries.forEach { style ->
-                StyleOptionRow(
-                    style = style,
-                    selected = state.settings.uiStyle == style,
-                    onClick = { viewModel.setUiStyle(style) },
+            // 一共 14 套，全列出来设置页太长：默认只显示当前这套，要看全部再展开
+            var styleExpanded by remember { mutableStateOf(false) }
+            StyleOptionRow(
+                style = state.settings.uiStyle,
+                selected = true,
+                onClick = {},
+            )
+            TextButton(
+                onClick = { styleExpanded = !styleExpanded },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    if (styleExpanded) {
+                        "收起"
+                    } else {
+                        "更换风格（共 " + UiStyle.entries.size + " 套）"
+                    },
                 )
+            }
+            if (styleExpanded) {
+                UiStyle.entries
+                    .filter { it != state.settings.uiStyle }
+                    .forEach { style ->
+                        StyleOptionRow(
+                            style = style,
+                            selected = false,
+                            onClick = { viewModel.setUiStyle(style) },
+                        )
+                    }
             }
 
             Spacer(Modifier.height(12.dp))
@@ -127,10 +150,10 @@ fun SettingsScreen(
             Text("深浅模式", style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
             Text(
-                text = if (state.settings.uiStyle == UiStyle.MIDNIGHT) {
-                    "当前选的「暗夜专注」本身就是深色风格，固定深色"
+                text = if (state.settings.uiStyle.forceDark) {
+                    "「" + state.settings.uiStyle.label + "」本身就是深色风格，固定深色"
                 } else {
-                    "墨纸 / 薄荷圆润 / 马克笔 都各自有浅色与深色两套"
+                    "浅色风格都各自带一套深色变体，切换后立即生效"
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
