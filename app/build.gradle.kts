@@ -16,11 +16,23 @@ android {
         minSdk = 26
         targetSdk = 35
         // 发新版本时：versionCode 每次 +1（商店 / 安装升级用），versionName 用语义化版本号
-        versionCode = 14
-        versionName = "1.4.2"
+        versionCode = 15
+        versionName = "1.4.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 词库导入时需要较大的游标窗口
         ksp { arg("room.schemaLocation", "$projectDir/schemas") }
+    }
+
+    signingConfigs {
+        // 个人自用：release 直接用调试签名。
+        // 好处是能和 debug 包**互相覆盖安装**（同一个签名），换包不用卸载、数据不丢；
+        // 而且 R8 优化后的包启动更快、体积小 39%（25.2MB → 15.4MB）。
+        create("selfSigned") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -29,6 +41,7 @@ android {
         }
         release {
             // 个人自用，直接装 APK；开启混淆以压缩体积（目标 < 50MB）
+            signingConfig = signingConfigs.getByName("selfSigned")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

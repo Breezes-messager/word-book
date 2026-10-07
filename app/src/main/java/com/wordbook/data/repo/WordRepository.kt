@@ -19,7 +19,8 @@ class WordRepository @Inject constructor(
 
     /** 首次启动导入词书 + 准备离线词典（幂等） */
     suspend fun ensureDataReady(onProgress: suspend (Int) -> Unit = {}) {
-        assetImporter.importWordsIfNeeded(onProgress)
+        // 升级场景下词书刷新会放后台，首页不用干等
+        assetImporter.prepareWordBook(onProgress)
         assetImporter.ensureDictDatabase()
     }
 

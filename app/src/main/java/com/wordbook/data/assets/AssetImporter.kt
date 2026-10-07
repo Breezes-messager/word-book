@@ -7,7 +7,10 @@ import androidx.room.withTransaction
 import com.wordbook.data.db.AppDatabase
 import com.wordbook.data.db.WordEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -37,38 +40,65 @@ class AssetImporter @Inject constructor(
         private const val BATCH = 500
     }
 
+    /** 后台刷新词书用（首页不再阻塞等它） */
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private val columns = "id, headword, phoneticUs, phoneticUk, transCn, transEn, " +
         "examplesJson, phrasesJson, rank, deck, deckPriority, shuffleKey, " +
         "remMethod, synoJson, relWordJson"
 
-    /** 词书准备（幂等）：空库做完整导入；assets 变了就增量刷新详情 */
+    /**
+     * 首页用：词书准备（幂等）。
+     * - 空库 → 全量导入，**必须等**（没词什么都干不了）
+     * - 已有词但 assets 变了 → **放后台刷新**，首页立刻可用
+     *   （升级后不用再干等 1.8 秒，词条详情几秒后自己补齐）
+     */
+    suspend fun prepareWordBook(onProgress: suspend (Int) -> Unit = {}): Int =
+        prepare(blockingRefresh = false, onProgress = onProgress)
+
+    /** 导入备份前用：保证刷新也是同步完成的 */
     suspend fun importWordsIfNeeded(onProgress: suspend (Int) -> Unit = {}): Int =
-        withContext(Dispatchers.IO) {
-            val marker = File(context.filesDir, "words.version")
-            val assetSize = runCatching {
-                context.assets.openFd(WORDS_ASSET).use { it.length }
-            }.getOrNull()
-            val exists = db.wordDao().count()
-            // 注意：File.readText() 在文件不存在时会抛异常，必须先判断
-            val knownVersion = if (marker.exists()) marker.readText().trim().toLongOrNull() else null
+        prepare(blockingRefresh = true, onProgress = onProgress)
 
-            when {
-                exists == 0L -> {
-                    val count = fullImport(onProgress)
-                    if (assetSize != null) marker.writeText(assetSize.toString())
-                    count
-                }
+    private suspend fun prepare(
+        blockingRefresh: Boolean,
+        onProgress: suspend (Int) -> Unit,
+    ): Int = withContext(Dispatchers.IO) {
+        val marker = File(context.filesDir, "words.version")
+        val assetSize = runCatching {
+            context.assets.openFd(WORDS_ASSET).use { it.length }
+        }.getOrNull()
+        val exists = db.wordDao().count()
+        // 注意：File.readText() 在文件不存在时会抛异常，必须先判断
+        val knownVersion = if (marker.exists()) marker.readText().trim().toLongOrNull() else null
 
-                assetSize != null && knownVersion != assetSize -> {
-                    val count = refreshFromAsset(onProgress)
-                    marker.writeText(assetSize.toString())
-                    Log.i(TAG, "词书已升级到新版本，刷新了 " + count + " 条词的详情（复习进度未受影响）")
-                    count
-                }
-
-                else -> exists.toInt()
+        when {
+            exists == 0L -> {
+                val count = fullImport(onProgress)
+                if (assetSize != null) marker.writeText(assetSize.toString())
+                count
             }
+
+            assetSize != null && knownVersion != assetSize -> {
+                // 先把标记写上，避免重复触发刷新
+                marker.writeText(assetSize.toString())
+                if (blockingRefresh) {
+                    val count = refreshFromAsset(onProgress)
+                    Log.i(TAG, "词书已升级，刷新了 " + count + " 条词的详情（复习进度未受影响）")
+                } else {
+                    backgroundScope.launch {
+                        runCatching {
+                            val count = refreshFromAsset({})
+                            Log.i(TAG, "词书已在后台升级，刷新了 " + count + " 条词的详情")
+                        }.onFailure { Log.w(TAG, "后台刷新词书失败", it) }
+                    }
+                }
+                exists.toInt()
+            }
+
+            else -> exists.toInt()
         }
+    }
 
     /** 全量导入（首次启动） */
     private suspend fun fullImport(onProgress: suspend (Int) -> Unit): Int {
