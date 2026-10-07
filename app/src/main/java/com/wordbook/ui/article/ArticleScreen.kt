@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
@@ -122,7 +123,14 @@ fun ArticleScreen(
             state.loading -> CircularProgressIndicator()
             state.content != null -> {
                 if (state.todayArticles.size > 1) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // 必须能横向滚动：一天最多 8 篇，用普通 Row 的话后面的会被挤成 0 宽，
+                    // 渲染出一个又瘦又空的 chip（第 5 篇之后基本就点不到了）
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         state.todayArticles.forEachIndexed { index, _ ->
                             AssistChip(
                                 onClick = { viewModel.selectArticle(index) },
@@ -177,7 +185,18 @@ private fun GenerationCard(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "今天学过 " + state.todayWordCount + " 个词，可以生成 " + state.batchCount + " 篇文章",
+                text = buildString {
+                    append("今天学过 ").append(state.todayWordCount).append(" 个词")
+                    if (state.batchCount > 0) {
+                        append("，最多可生成 ").append(state.batchCount).append(" 篇文章")
+                    }
+                    if (state.todayArticles.isNotEmpty()) {
+                        append("（今天已生成 ").append(state.todayArticles.size).append(" 篇")
+                        val left = state.batchCount - state.todayArticles.size
+                        if (left > 0) append("，还能再生成 ").append(left).append(" 篇")
+                        append("）")
+                    }
+                },
                 style = MaterialTheme.typography.bodyLarge,
             )
             Spacer(Modifier.height(4.dp))
