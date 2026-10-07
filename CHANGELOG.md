@@ -1,5 +1,36 @@
 # 更新日志
 
+## v1.4.1 — 2026-10-07
+
+### 修复：同近义看不出对应哪个意思
+
+**反馈**：`chap` 的同近义显示成 `n. apple / customer / checking / egg / guy` —— 既不知道对应哪个义项，
+也看不出和 apple 有什么关系。
+
+**查证**：先去翻了词书原始数据，**数据源本身就是这么标的**，不是提取错位：
+
+```json
+{ "pos": "n", "tran": "小伙子；家伙；龟裂",
+  "hwds": ["apple", "customer", "checking", "egg", "guy"] }
+```
+
+这组词其实都是"**人 / 家伙**"这个义项的口语说法（a bad apple、a tough customer、a good egg、a guy），
+把义项补上就说得通了 —— 之前 UI 只显示了 `pos` 和词，**把最关键的那行 `tran` 漏掉了**。
+
+**改法**：每组改成两行 ——
+
+```
+同近义
+n. 小伙子；家伙；龟裂              ← 灰色小字：这组同义词对应哪个义项
+apple / customer / egg / guy      ← 同义词
+```
+
+顺带抽样核对了数据质量：大部分是准的（`client 客户→customer/consumer/principal`、
+`strive 努力→struggle/labor`、`campaign 运动→movement/activity/exercise`），
+少数条目跨义项或带俚语/引申用法，所以"义项"这一行尤其必要。
+
+截图：`docs/style-samples/app-synonym-sense.png`
+
 ## v1.4.0 — 2026-10-07
 
 ### 新增：每日新词数可以设为「不限」

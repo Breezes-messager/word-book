@@ -292,14 +292,29 @@ private fun BackContent(
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
             Spacer(Modifier.height(12.dp))
-            Text("同近义", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(
+                text = "同近义",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
             synonyms.forEach { group ->
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(6.dp))
+                // 先写清楚这组同义词对应**哪个义项**，否则像 chap 那组
+                // （apple / customer / egg / guy）光看词完全不知道在说什么
+                val sense = buildString {
+                    if (group.pos.isNotBlank()) append(group.pos).append(". ")
+                    append(group.tran)
+                }.trim().trimEnd('；', ';', '，', ',')
+                if (sense.isNotBlank()) {
+                    Text(
+                        text = sense,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                }
                 Text(
-                    text = buildString {
-                        if (group.pos.isNotBlank()) append(group.pos).append(". ")
-                        append(group.words.joinToString(" / "))
-                    },
+                    text = group.words.joinToString(" / "),
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
