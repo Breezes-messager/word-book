@@ -152,12 +152,25 @@ fun SettingsScreen(
             NumberRow(
                 label = "每日新词数",
                 value = state.settings.dailyNewWords,
+                min = 0,
+                zeroLabel = "不限",
                 onChange = viewModel::setDailyNewWords,
             )
+            Text(
+                text = if (state.settings.dailyNewWords <= 0) {
+                    "当前不限：不扣每日额度，单轮最多 200 个新词，学完可以再点「开始学习」继续"
+                } else {
+                    "减到 0 就是不限（单轮最多 200 个）"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
             NumberRow(
-                label = "每日复习上限（0 = 不限）",
+                label = "每日复习上限",
                 value = state.settings.dailyReviewLimit,
                 min = 0,
+                zeroLabel = "不限",
                 onChange = viewModel::setDailyReviewLimit,
             )
             SwitchRow(
@@ -649,6 +662,7 @@ private fun NumberRow(
     label: String,
     value: Int,
     min: Int = 1,
+    zeroLabel: String? = null,
     onChange: (Int) -> Unit,
 ) {
     Row(
@@ -659,7 +673,7 @@ private fun NumberRow(
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         OutlinedButton(onClick = { onChange((value - step(value)).coerceAtLeast(min)) }) { Text("-") }
         Text(
-            text = value.toString(),
+            text = if (value == 0 && zeroLabel != null) zeroLabel else value.toString(),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(horizontal = 12.dp),
         )

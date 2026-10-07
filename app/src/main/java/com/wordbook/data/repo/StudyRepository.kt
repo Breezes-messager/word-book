@@ -49,10 +49,17 @@ class StudyRepository @Inject constructor(
     private val logDao = db.reviewLogDao()
     private val contextDao = db.wordContextDao()
 
+    companion object {
+        /** "不限"时单轮会话最多取多少个新词（防止一次建几千张卡） */
+        const val UNLIMITED_SESSION_CAP = 200
+    }
+
     /** 批量取"文章例句"，最多每个词 2 句 */
     private suspend fun contextsFor(wordIds: List<Long>): Map<Long, List<String>> {
         if (wordIds.isEmpty()) return emptyMap()
-        return contextDao.byWordIds(wordIds)
+        // 分批查：SQLite 的 IN 参数有上限（老版本 999），"不限"之后一次可能上千个 id
+        return wordIds.chunked(500)
+            .flatMap { contextDao.byWordIds(it) }
             .groupBy { it.wordId }
             .mapValues { (_, list) -> list.take(2).map { it.sentence } }
     }
@@ -94,12 +101,22 @@ class StudyRepository @Inject constructor(
 
     // ------------------------------------------------------------------ 会话构造
 
-    /** 新词学习队列：不超过“每日新词数 - 今日已学新词” */
+    /**
+     * 新词学习队列。
+     * 每日新词数为 0 表示**不限**：不再按"今日已学"扣减，但单轮仍然最多取
+     * [UNLIMITED_SESSION_CAP] 个 —— 否则一次要建几千张卡、拼几千个 id 的查询，
+     * 启动会明显变慢。学完这一轮可以再点「开始学习」继续拿。
+     */
     suspend fun newWordSession(): List<StudyWord> {
         val settings = settingsRepository.current()
         val today = todayKey()
         val done = logDao.newCountByDay(today)
-        val allowance = (settings.dailyNewWords - done).coerceAtLeast(0)
+        val dailyLimit = settings.dailyNewWords
+        val allowance = if (dailyLimit <= 0) {
+            UNLIMITED_SESSION_CAP
+        } else {
+            (dailyLimit - done).coerceAtLeast(0)
+        }
         if (allowance == 0) return emptyList()
 
         val words = if (settings.shuffleNewWords) {
@@ -109,16 +126,28 @@ class StudyRepository @Inject constructor(
         }
 
         val now = System.currentTimeMillis()
-        val result = mutableListOf<StudyWord>()
-        for (word in words) {
-            val existing = cardDao.byWordId(word.id)
-            // 注意：这里必须用 run 返回 copy 后的对象，
-            // 用 also 的话返回值是接收者本身，插入生成的 id 会被丢掉（id 一直是 0）
-            val card = existing ?: run {
-                val fresh = CardEntity(wordId = word.id, dueAt = now)
-                fresh.copy(id = cardDao.insert(fresh))
-            }
-            result += StudyWord(word, card)
+
+        // 一次查出这批词已有的卡（原来是每张词一次查询，200 张就是 200 次）
+        val existing = words.map { it.id }
+            .chunked(500)
+            .flatMap { cardDao.byWordIds(it) }
+            .associateBy { it.wordId }
+
+        // 缺卡的批量插入（逐张插每张一个事务，200 张要好几秒）
+        val missing = words.filter { existing[it.id] == null }
+        val fresh: Map<Long, CardEntity> = if (missing.isEmpty()) {
+            emptyMap()
+        } else {
+            val ids = cardDao.insertAllReturningIds(
+                missing.map { CardEntity(wordId = it.id, dueAt = now) },
+            )
+            missing.mapIndexed { index, word ->
+                word.id to CardEntity(id = ids[index], wordId = word.id, dueAt = now)
+            }.toMap()
+        }
+
+        val result = words.map { word ->
+            StudyWord(word, existing[word.id] ?: fresh.getValue(word.id))
         }
         val contexts = contextsFor(result.map { it.word.id })
         return result.map { it.copy(contexts = contexts[it.word.id].orEmpty()) }

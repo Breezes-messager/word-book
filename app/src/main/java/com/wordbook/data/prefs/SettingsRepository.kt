@@ -67,7 +67,8 @@ class SettingsRepository @Inject constructor(
 
     suspend fun current(): AppSettings = settings.first()
 
-    suspend fun setDailyNewWords(value: Int) = context.dataStore.edit { it[Keys.dailyNewWords] = value.coerceIn(1, 500) }
+    /** 每日新词数：0 = 不限 */
+    suspend fun setDailyNewWords(value: Int) = context.dataStore.edit { it[Keys.dailyNewWords] = value.coerceIn(0, 500) }
     suspend fun setDailyReviewLimit(value: Int) = context.dataStore.edit { it[Keys.dailyReviewLimit] = value.coerceAtLeast(0) }
     suspend fun setShuffleNewWords(value: Boolean) = context.dataStore.edit { it[Keys.shuffleNewWords] = value }
     suspend fun setArticleStyle(style: ArticleStyle) = context.dataStore.edit { it[Keys.articleStyle] = style.label }

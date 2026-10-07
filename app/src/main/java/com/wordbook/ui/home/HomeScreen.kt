@@ -148,7 +148,10 @@ private fun TodayTaskCard(
             StyleSectionTitle("今日任务")
             Spacer(Modifier.height(12.dp))
 
-            Text("新词 " + newDone + " / " + newTarget, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = "新词 " + newDone + " / " + if (newTarget <= 0) "不限" else newTarget.toString(),
+                style = MaterialTheme.typography.bodyLarge,
+            )
             Spacer(Modifier.height(4.dp))
             StyleProgress(progress = if (newTarget <= 0) 0f else (newDone.toFloat() / newTarget).coerceIn(0f, 1f))
             Spacer(Modifier.height(12.dp))

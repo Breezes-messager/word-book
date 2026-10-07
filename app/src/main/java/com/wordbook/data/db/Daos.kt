@@ -114,6 +114,13 @@ interface CardDao {
     @Insert
     suspend fun insertAll(cards: List<CardEntity>)
 
+    /** 批量建卡并按输入顺序返回自增 id（"不限"时一次要建上百张） */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllReturningIds(cards: List<CardEntity>): List<Long>
+
+    @Query("SELECT * FROM cards WHERE wordId IN (:wordIds)")
+    suspend fun byWordIds(wordIds: List<Long>): List<CardEntity>
+
     @Update
     suspend fun update(card: CardEntity)
 
