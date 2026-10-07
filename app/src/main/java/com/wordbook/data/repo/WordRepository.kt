@@ -36,6 +36,8 @@ class WordRepository @Inject constructor(
 
     suspend fun byHeadword(headword: String): WordEntity? = wordDao.byHeadword(headword)
 
+    suspend fun byId(id: Long): WordEntity? = wordDao.byId(id)
+
     suspend fun searchPrefix(prefix: String, limit: Int = 30): List<WordEntity> =
         wordDao.searchPrefix(prefix, limit)
 

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #E8EDEA; font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+         padding: 34px 44px 40px; color: #10322A; }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  .sub { font-size: 13px; color: #5C7A70; margin-bottom: 24px; }
+  .row { display: flex; gap: 26px; align-items: flex-start; }
+  .col { width: 390px; }
+  .cap { font-size: 13px; font-weight: 700; color: #2F9E7E; margin-bottom: 4px; }
+  .cap span { font-weight: 400; color: #5C7A70; }
+  .phone { width: 390px; height: 844px; background: #F3F8F4; border-radius: 26px;
+           box-shadow: 0 6px 22px rgba(16,50,42,.18); overflow: hidden; position: relative;
+           display: flex; flex-direction: column; }
+  .status { height: 26px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 18px; font-size: 11px; opacity: .75; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 6px 14px 10px; }
+  .back { font-size: 20px; }
+  .field { flex: 1; height: 44px; background: #fff; border-radius: 22px; display: flex;
+           align-items: center; gap: 8px; padding: 0 14px; font-size: 15px;
+           box-shadow: 0 1px 3px rgba(16,50,42,.10); }
+  .field .ico { color: #2F9E7E; }
+  .field .txt { flex: 1; }
+  .field .txt.ph { color: #9DB5AC; }
+  .field .clear { color: #9DB5AC; }
+  .body { flex: 1; overflow: hidden; padding: 0 14px; }
+  .chips { display: flex; gap: 8px; padding: 2px 0 12px; flex-wrap: wrap; }
+  .chip { font-size: 12.5px; padding: 6px 13px; border-radius: 16px; background: #fff;
+          color: #4E7167; border: 1px solid #DFF3EC; }
+  .chip.on { background: #2F9E7E; color: #fff; border-color: #2F9E7E; font-weight: 700; }
+  .meta { font-size: 12px; color: #6E8C81; padding: 0 2px 8px; }
+  .card { background: #fff; border-radius: 18px; box-shadow: 0 1px 3px rgba(16,50,42,.08);
+          margin-bottom: 10px; padding: 13px 15px; }
+  .wrow { display: flex; align-items: flex-start; gap: 10px; }
+  .wmain { flex: 1; min-width: 0; }
+  .wright { display: flex; align-items: center; gap: 8px; padding-top: 3px; }
+  .w { display: flex; align-items: baseline; gap: 8px; }
+  .hw { font-size: 19px; font-weight: 700; }
+  .ph { font-size: 12.5px; color: #6E8C81; }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 10px; white-space: nowrap; }
+  .b-new { background: #E9F4EE; color: #6E8C81; }
+  .b-learn { background: #E3EEFA; color: #2C6BA8; }
+  .b-due { background: #DFF3EC; color: #1E6B55; font-weight: 700; }
+  .b-hard { background: #FCE7E5; color: #C0423A; font-weight: 700; }
+  .tr { font-size: 13.5px; color: #35564C; margin-top: 5px; line-height: 1.5; }
+  .hl { background: #DFF3EC; color: #1E6B55; font-weight: 700; border-radius: 3px; padding: 0 2px; }
+  .spk { color: #2F9E7E; font-size: 14px; }
+  .sec { font-size: 12.5px; font-weight: 700; color: #2F9E7E; margin: 4px 0 8px; }
+  .hist { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .hchip { background: #fff; border-radius: 14px; padding: 6px 12px; font-size: 13px; color: #35564C; }
+  .tip { background: #fff; border-radius: 18px; padding: 14px 16px; }
+  .tip li { font-size: 13px; color: #4E7167; line-height: 1.95; list-style: none; }
+  .tip b { color: #10322A; }
+  .kbd { background: #DFF3EC; color: #1E6B55; border-radius: 5px; padding: 1px 6px; font-weight: 700; font-size: 12.5px; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #fff;
+           border-radius: 22px 22px 0 0; padding: 10px 18px 20px; box-shadow: 0 -6px 20px rgba(16,50,42,.16); }
+  .grab { width: 40px; height: 4px; background: #D6E7DF; border-radius: 2px; margin: 0 auto 14px; }
+  .btn { display: block; text-align: center; background: #2F9E7E; color: #fff; font-weight: 700;
+         border-radius: 20px; padding: 12px; font-size: 14.5px; margin-top: 14px; }
+  .btn.ghost { background: #DFF3EC; color: #1E6B55; margin-top: 8px; }
+  .note { font-size: 12px; color: #6E8C81; margin-top: 10px; }
+  .legend { margin-top: 22px; background: #fff; border-radius: 16px; padding: 16px 20px; width: 1700px; }
+  .legend h3 { font-size: 15px; margin-bottom: 8px; }
+  .legend div { font-size: 13px; color: #4E7167; line-height: 1.95; }
+  .legend b { color: #2F9E7E; }
+</style></head><body>
+<h1>单词搜索 · 界面方案（薄荷圆润 · 浅色）</h1>
+<div class="sub">数据全部取自真实词库：前缀 “par” 命中 9 个；中文「妨碍」命中 prevent / disturb / hamper / interfere；记忆法也是词库里原有的</div>
+
+<div class="row">
+  <div class="col">
+    <div class="cap">① 打开搜索 <span>· 无输入时给历史和提示</span></div>
+    <div class="phone">
+      <div class="status"><span>15:52</span><span>5G ▮▮ 86</span></div>
+      <div class="topbar"><div class="back">←</div>
+        <div class="field"><span class="ico">🔍</span><span class="txt ph">搜索单词或中文释义</span></div></div>
+      <div class="body">
+        <div class="sec">最近搜索</div>
+        <div class="hist"><div class="hchip">paragraph</div><div class="hchip">妨碍</div>
+          <div class="hchip">hamper</div><div class="hchip">干扰</div></div>
+        <div class="tip">
+          <li>· 输 <b class="kbd">par</b> → 前缀匹配 paragraph / parallel / party…</li>
+          <li>· 直接输中文：<b class="kbd">妨碍</b> → prevent / hamper / interfere</li>
+          <li>· 输 <b class="kbd">running</b> 会自动还原成 <b>run</b></li>
+          <li>· 输错了也没关系，会给相近的词</li>
+        </div>
+        <div class="note">词库共 5046 词 · 全部离线，不联网</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="cap">② 输入 par <span>· 每行带学习状态</span></div>
+    <div class="phone">
+      <div class="status"><span>15:52</span><span>5G ▮▮ 86</span></div>
+      <div class="topbar"><div class="back">←</div>
+        <div class="field"><span class="ico">🔍</span><span class="txt">par</span><span class="clear">✕</span></div></div>
+      <div class="body">
+        <div class="chips"><div class="chip on">全部 9</div><div class="chip">未学 6</div>
+          <div class="chip">已学 3</div><div class="chip">难词 1</div></div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">paragraph</span><span class="ph">/ˈpærəɡræf/</span></div>
+              <div class="tr">n. 段落;短评;段落符号</div>
+            </div>
+            <div class="wright"><span class="badge b-due">复习中 · 明天</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">parallel</span><span class="ph">/ˈpærəlel/</span></div>
+              <div class="tr">n. 平行线;对比　adj. 平行的</div>
+            </div>
+            <div class="wright"><span class="badge b-learn">学习中</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">paralyse</span><span class="ph">/ˈpærəlaɪz/</span></div>
+              <div class="tr">vt. 使瘫痪; 使丧失作用</div>
+            </div>
+            <div class="wright"><span class="badge b-hard">难词 · 重来 4 次</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">party</span><span class="ph">/ˈpɑrti/</span></div>
+              <div class="tr">n. 聚会;政党</div>
+            </div>
+            <div class="wright"><span class="badge b-new">未学</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="cap">③ 输入「妨碍」<span>· 中文释义搜索（本次新增）</span></div>
+    <div class="phone">
+      <div class="status"><span>15:53</span><span>5G ▮▮ 86</span></div>
+      <div class="topbar"><div class="back">←</div>
+        <div class="field"><span class="ico">🔍</span><span class="txt">妨碍</span><span class="clear">✕</span></div></div>
+      <div class="body">
+        <div class="meta">4 个结果 · 按释义匹配</div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">prevent</span><span class="ph">/prɪˈvɛnt/</span></div>
+              <div class="tr">v. (from)预防,防止,阻止,制止,<span class="hl">妨碍</span></div>
+            </div>
+            <div class="wright"><span class="badge b-due">复习中 · 3 天后</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">hamper</span><span class="ph">/ˈhæmpɚ/</span></div>
+              <div class="tr">v. <span class="hl">妨碍</span>;束缚;使困累</div>
+            </div>
+            <div class="wright"><span class="badge b-hard">难词 · 重来 3 次</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">interfere</span><span class="ph">/ˌɪntɚˈfɪr/</span></div>
+              <div class="tr">v. 干涉;<span class="hl">妨碍</span>;打扰</div>
+            </div>
+            <div class="wright"><span class="badge b-learn">学习中</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">disturb</span><span class="ph">/dɪˈstɝb/</span></div>
+              <div class="tr">vt. 扰乱, <span class="hl">妨碍</span>;使不安; 使烦恼</div>
+            </div>
+            <div class="wright"><span class="badge b-new">未学</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="cap">④ 点开某一行 <span>· 底部词义卡 + 直接加入学习</span></div>
+    <div class="phone">
+      <div class="status"><span>15:53</span><span>5G ▮▮ 86</span></div>
+      <div class="topbar"><div class="back">←</div>
+        <div class="field"><span class="ico">🔍</span><span class="txt">妨碍</span><span class="clear">✕</span></div></div>
+      <div class="body" style="opacity:.3">
+        <div class="meta">4 个结果 · 按释义匹配</div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">prevent</span><span class="ph">/prɪˈvɛnt/</span></div>
+              <div class="tr">v. (from)预防,防止,阻止,制止,妨碍</div>
+            </div>
+            <div class="wright"><span class="badge b-due">复习中</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="wrow">
+            <div class="wmain">
+              <div class="w"><span class="hw">hamper</span><span class="ph">/ˈhæmpɚ/</span></div>
+              <div class="tr">v. 妨碍;束缚;使困累</div>
+            </div>
+            <div class="wright"><span class="badge b-hard">难词</span><span class="spk">▶</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="w"><span class="hw" style="font-size:24px">hamper</span>
+          <span class="ph">/ˈhæmpɚ/</span><span class="spk" style="margin-left:6px">▶ 发音</span></div>
+        <div class="tr" style="margin-top:10px; font-size:14.5px">
+          v. <span class="hl">妨碍</span>;束缚;使困累<br>n. 食盒,食篮;阻碍物</div>
+        <div class="tr" style="color:#6E8C81; margin-top:8px">英释 &nbsp;v. to make it difficult for someone to do something</div>
+        <div class="tr" style="color:#B8860B; margin-top:8px">记忆法 &nbsp;本义指“有盖的大篮子”，拿着它走路常常绊脚，所以引申为“妨碍”</div>
+        <div class="btn">加入今日学习</div>
+        <div class="btn ghost">查看完整词卡</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <h3>这次想加的几件事</h3>
+  <div>
+    <b>1. 中文释义也能搜</b> —— 现在只能按英文前缀搜。想表达「妨碍」却想不起是哪个词，是最常见的场景。<br>
+    <b>2. 每行显示学习状态</b> —— 未学 / 学习中 / 复习中（含到期时间）/ <b>难词（重来 ≥3 次）</b>，一眼知道该不该管。<br>
+    <b>3. 按状态筛选</b> —— 「全部 9 / 未学 6 / 已学 3 / 难词 1」，可以只看没学过的。<br>
+    <b>4. 词形还原</b> —— 输 running 自动找 run（复用现有查词逻辑）。<br>
+    <b>5. 历史 + 点开即用</b> —— 结果点开是词义卡，可直接「加入今日学习」，不用回学习页翻。
+  </div>
+</div>
+</body></html>

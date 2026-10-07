@@ -58,6 +58,44 @@ interface WordDao {
     @Query("SELECT * FROM words WHERE headword LIKE :prefix || '%' COLLATE NOCASE ORDER BY rank LIMIT :limit")
     suspend fun searchPrefix(prefix: String, limit: Int): List<WordEntity>
 
+    /**
+     * 搜索：英文前缀 + 中文释义，结果带上卡片状态（用于界面上的学习状态徽章）。
+     *
+     * 排序规则：英文前缀命中的排前面（更精确）→ 用户手动「加入今日学习」的排前面
+     * → 其余按词频（rank）。**同名参数 :q 出现多次是合法的**，Room 只绑定一次。
+     */
+    @Query(
+        """
+        SELECT w.id AS id, w.headword AS headword, w.phoneticUs AS phoneticUs,
+               w.phoneticUk AS phoneticUk, w.transCn AS transCn, w.transEn AS transEn,
+               w.remMethod AS remMethod, w.rank AS rank,
+               c.state AS state, c.dueAt AS dueAt, c.lapses AS lapses
+        FROM words w LEFT JOIN cards c ON c.wordId = w.id
+        WHERE w.headword LIKE :q || '%' COLLATE NOCASE
+           OR w.transCn LIKE '%' || :q || '%'
+        ORDER BY
+            CASE WHEN w.headword LIKE :q || '%' COLLATE NOCASE THEN 0 ELSE 1 END,
+            CASE WHEN c.dueAt = 0 THEN 0 ELSE 1 END,
+            w.rank ASC
+        LIMIT :limit
+        """
+    )
+    suspend fun search(q: String, limit: Int): List<WordSearchRow>
+
+    /** 四个筛选标签的数量，一次查询全算出来（避免 4 次全表扫描） */
+    @Query(
+        """
+        SELECT COALESCE(COUNT(*), 0) AS total,
+               COALESCE(SUM(CASE WHEN c.id IS NULL OR c.state = 0 THEN 1 ELSE 0 END), 0) AS unlearned,
+               COALESCE(SUM(CASE WHEN c.id IS NOT NULL AND c.state != 0 THEN 1 ELSE 0 END), 0) AS learned,
+               COALESCE(SUM(CASE WHEN c.lapses >= 3 THEN 1 ELSE 0 END), 0) AS hard
+        FROM words w LEFT JOIN cards c ON c.wordId = w.id
+        WHERE w.headword LIKE :q || '%' COLLATE NOCASE
+           OR w.transCn LIKE '%' || :q || '%'
+        """
+    )
+    suspend fun searchCounts(q: String): WordSearchCounts
+
     @Query("SELECT * FROM words ORDER BY deckPriority, rank LIMIT :limit OFFSET :offset")
     suspend fun page(limit: Int, offset: Int): List<WordEntity>
 
@@ -77,25 +115,28 @@ interface WordDao {
     )
     suspend fun countNewAvailable(): Int
 
-    /** 顺序模式：还没建卡的词，按词书优先级 + 序号取 */
+    /**
+     * 顺序模式：还没建卡的词，按词书优先级 + 序号取。
+     * `c.dueAt = 0` 是"用户手动加入今日学习"的约定值，这些词排最前面。
+     */
     @Query(
         """
         SELECT w.* FROM words w
         LEFT JOIN cards c ON c.wordId = w.id
         WHERE c.id IS NULL OR c.state = 0
-        ORDER BY w.deckPriority ASC, w.rank ASC
+        ORDER BY CASE WHEN c.dueAt = 0 THEN 0 ELSE 1 END, w.deckPriority ASC, w.rank ASC
         LIMIT :limit
         """
     )
     suspend fun newWordsSequential(limit: Int): List<WordEntity>
 
-    /** 乱序模式：还没建卡的词，按稳定的乱序键取 */
+    /** 乱序模式：还没建卡的词，按稳定的乱序键取（手动加入的同样排最前） */
     @Query(
         """
         SELECT w.* FROM words w
         LEFT JOIN cards c ON c.wordId = w.id
         WHERE c.id IS NULL OR c.state = 0
-        ORDER BY w.shuffleKey ASC
+        ORDER BY CASE WHEN c.dueAt = 0 THEN 0 ELSE 1 END, w.shuffleKey ASC
         LIMIT :limit
         """
     )
@@ -105,6 +146,29 @@ interface WordDao {
 data class DeckCount(val deck: String, val total: Int)
 
 data class WordIdName(val id: Long, val headword: String)
+
+/** 搜索结果行：词条 + 卡片状态（state=null 表示还没有卡片，即"未学"） */
+data class WordSearchRow(
+    val id: Long,
+    val headword: String,
+    val phoneticUs: String?,
+    val phoneticUk: String?,
+    val transCn: String?,
+    val transEn: String?,
+    val remMethod: String?,
+    val rank: Int,
+    val state: Int?,
+    val dueAt: Long?,
+    val lapses: Int?,
+)
+
+/** 搜索结果的四个筛选数量 */
+data class WordSearchCounts(
+    val total: Int = 0,
+    val unlearned: Int = 0,
+    val learned: Int = 0,
+    val hard: Int = 0,
+)
 
 @Dao
 interface CardDao {
@@ -155,6 +219,10 @@ interface CardDao {
 
     @Query("DELETE FROM cards")
     suspend fun deleteAll()
+
+    /** 把某张卡改成"今天要学"：dueAt = 0 是手动加入的约定值（新词队列会把它排到最前） */
+    @Query("UPDATE cards SET dueAt = 0 WHERE id = :id")
+    suspend fun markDueNow(id: Long)
 }
 
 @Dao

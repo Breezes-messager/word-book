@@ -25,6 +25,7 @@ import com.wordbook.ui.settings.SettingsScreen
 import com.wordbook.ui.stats.StatsScreen
 import com.wordbook.ui.study.SessionMode
 import com.wordbook.ui.study.StudyScreen
+import com.wordbook.ui.search.SearchScreen
 import com.wordbook.ui.words.WordListScreen
 
 object Routes {
@@ -33,6 +34,7 @@ object Routes {
     const val STATS = "stats"
     const val SETTINGS = "settings"
     const val WORDS = "words"
+    const val SEARCH = "search"
     const val STUDY = "study"
     const val REVIEW = "review"
 }
@@ -82,6 +84,7 @@ fun WordBookNavHost() {
                     onOpenArticle = { navController.switchTab(currentRoute, Routes.ARTICLE) },
                     onOpenWordList = { navController.navigate(Routes.WORDS) },
                     onOpenStats = { navController.switchTab(currentRoute, Routes.STATS) },
+                    onOpenSearch = { navController.navigate(Routes.SEARCH) },
                 )
             }
             composable(Routes.ARTICLE) {
@@ -92,6 +95,9 @@ fun WordBookNavHost() {
             composable(Routes.STATS) { StatsScreen() }
             composable(Routes.SETTINGS) { SettingsScreen() }
             composable(Routes.WORDS) { WordListScreen() }
+            composable(Routes.SEARCH) {
+                SearchScreen(onBack = { navController.popBackStack() })
+            }
             composable(Routes.STUDY) {
                 StudyScreen(mode = SessionMode.NEW, onBack = { navController.popBackStack() })
             }

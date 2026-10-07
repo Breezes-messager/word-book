@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wordbook.ui.components.StyleCard
 import com.wordbook.ui.components.StyleProgress
 import com.wordbook.ui.components.StyleSectionTitle
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.draw.clip
 import com.wordbook.ui.components.WordRow
 import com.wordbook.util.rememberSpeaker
 
@@ -43,6 +49,7 @@ fun HomeScreen(
     onOpenArticle: () -> Unit,
     onOpenWordList: () -> Unit,
     onOpenStats: () -> Unit,
+    onOpenSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -70,6 +77,29 @@ fun HomeScreen(
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
             Column(modifier = Modifier.padding(16.dp)) {
+                // 搜索入口：点一下进搜索页（英文前缀 / 中文释义都能搜）
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .clickable(onClick = onOpenSearch)
+                        .padding(horizontal = 16.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "搜索单词或中文释义",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
                 TodayTaskCard(
                     newDone = state.task?.newDone ?: 0,
                     newTarget = state.task?.newTarget ?: 0,

@@ -45,6 +45,7 @@ class SettingsRepository @Inject constructor(
         val articleFontScale = floatPreferencesKey("article_font_scale")
         val articleLineHeightScale = floatPreferencesKey("article_line_height_scale")
         val lastArticleSelection = stringPreferencesKey("last_article_selection")
+        val searchHistory = stringPreferencesKey("search_history")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -64,6 +65,7 @@ class SettingsRepository @Inject constructor(
             articleFontScale = prefs[Keys.articleFontScale] ?: 1.0f,
             articleLineHeightScale = prefs[Keys.articleLineHeightScale] ?: 1.0f,
             lastArticleSelection = prefs[Keys.lastArticleSelection] ?: "",
+            searchHistory = prefs[Keys.searchHistory] ?: "",
         )
     }
 
@@ -74,6 +76,17 @@ class SettingsRepository @Inject constructor(
     suspend fun setDailyReviewLimit(value: Int) = context.dataStore.edit { it[Keys.dailyReviewLimit] = value.coerceAtLeast(0) }
     suspend fun setShuffleNewWords(value: Boolean) = context.dataStore.edit { it[Keys.shuffleNewWords] = value }
     suspend fun setArticleStyle(style: ArticleStyle) = context.dataStore.edit { it[Keys.articleStyle] = style.label }
+
+    /** 记一条搜索历史（去重、最近在前、最多 10 条） */
+    suspend fun pushSearchHistory(query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) return
+        val current = current().historyList().filterNot { it.equals(q, ignoreCase = true) }
+        val next = (listOf(q) + current).take(10)
+        context.dataStore.edit { it[Keys.searchHistory] = next.joinToString("\n") }
+    }
+
+    suspend fun clearSearchHistory() = context.dataStore.edit { it.remove(Keys.searchHistory) }
 
     /** 记住上次看的文章（"日期:批次"），切 Tab 回来时恢复 */
     suspend fun setLastArticleSelection(value: String) = context.dataStore.edit {

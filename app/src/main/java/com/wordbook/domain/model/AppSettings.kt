@@ -43,4 +43,8 @@ data class AppSettings(
      * 切到别的 Tab 再回来时，文章页的 ViewModel 会重建，靠它恢复上次看的那一篇。
      */
     val lastArticleSelection: String = "",
-)
+    /** 搜索历史，换行分隔，最近的在最前 */
+    val searchHistory: String = "",
+) {
+    fun historyList(): List<String> = searchHistory.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
+}
