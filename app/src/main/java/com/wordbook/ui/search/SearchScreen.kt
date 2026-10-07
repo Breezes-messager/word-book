@@ -1,46 +1,42 @@
 package com.wordbook.ui.search
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -53,22 +49,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wordbook.domain.model.MatchKind
 import com.wordbook.domain.model.SearchFilter
 import com.wordbook.domain.model.SearchHit
 import com.wordbook.domain.model.WordBadge
+import com.wordbook.ui.components.StyleCard
+import com.wordbook.ui.theme.LocalAppStyle
 import com.wordbook.util.rememberSpeaker
 
 /**
- * 单词搜索页：英文前缀 + 中文释义。
- * 布局对着 docs/style-samples/search-mockup.png 实现。
+ * 单词搜索页。视觉对着 docs/style-samples/search-mockup.png 做：
+ * 无边框胶囊搜索框、药丸筛选、每行一张风格化卡片（而不是 M3 默认的分隔线列表）。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,9 +84,7 @@ fun SearchScreen(
     val focusRequester = remember { FocusRequester() }
     val snackbar = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) {
-        runCatching { focusRequester.requestFocus() }
-    }
+    LaunchedEffect(Unit) { runCatching { focusRequester.requestFocus() } }
     LaunchedEffect(state.message) {
         state.message?.let {
             snackbar.showSnackbar(it)
@@ -95,33 +95,27 @@ fun SearchScreen(
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // ---- 顶栏：返回 + 搜索框 ----
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 4.dp, end = 14.dp, top = 6.dp, bottom = 10.dp),
+                        .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                    OutlinedTextField(
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "返回",
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .clickable(onClick = onBack)
+                            .padding(10.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    SearchField(
                         value = state.query,
                         onValueChange = viewModel::onQueryChange,
-                        singleLine = true,
-                        placeholder = { Text("搜索单词或中文释义") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        trailingIcon = {
-                            if (state.query.isNotEmpty()) {
-                                IconButton(onClick = viewModel::clearQuery) {
-                                    Icon(Icons.Default.Close, contentDescription = "清空")
-                                }
-                            }
-                        },
-                        shape = RoundedCornerShape(22.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .focusRequester(focusRequester),
+                        onClear = viewModel::clearQuery,
+                        focusRequester = focusRequester,
+                        modifier = Modifier.weight(1f),
                     )
                 }
 
@@ -145,15 +139,19 @@ fun SearchScreen(
                             onSelect = viewModel::setFilter,
                         )
                         ResultMeta(state)
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
                             items(state.hits, key = { it.wordId }) { hit ->
-                                ResultRow(
-                                    hit = hit,
-                                    query = state.query,
-                                    onClick = { viewModel.openDetail(hit.wordId) },
-                                    onSpeak = { speaker.speak(hit.headword) },
-                                )
-                                HorizontalDivider()
+                                StyleCard(onClick = { viewModel.openDetail(hit.wordId) }) {
+                                    ResultRow(
+                                        hit = hit,
+                                        query = state.query,
+                                        onSpeak = { speaker.speak(hit.headword) },
+                                    )
+                                }
                             }
                             if (state.hits.isEmpty()) {
                                 item { NoResult(state.query) }
@@ -183,6 +181,119 @@ fun SearchScreen(
     }
 }
 
+/** 无边框胶囊搜索框（渲染图里那种），不用 M3 的描边输入框 */
+@Composable
+private fun SearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onClear: () -> Unit,
+    focusRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
+    val tokens = LocalAppStyle.current
+    val shape = RoundedCornerShape(22.dp)
+    Surface(
+        modifier = modifier,
+        shape = shape,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = tokens.cardElevation.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.width(8.dp))
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    imeAction = ImeAction.Search,
+                ),
+                decorationBox = { inner ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = "搜索单词或中文释义",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        inner()
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
+                    .padding(vertical = 14.dp),
+            )
+            if (value.isNotEmpty()) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "清空",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .clickable(onClick = onClear)
+                        .padding(6.dp),
+                )
+            }
+        }
+    }
+}
+
+/** 药丸筛选标签（渲染图里那种），替代 M3 的 FilterChip */
+@Composable
+private fun StylePill(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tokens = LocalAppStyle.current
+    val shape = RoundedCornerShape(if (tokens.cardCorner >= 16) 18.dp else 8.dp)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            )
+            .then(
+                if (selected) {
+                    Modifier
+                } else {
+                    Modifier.border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant,
+                        shape,
+                    )
+                },
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 15.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+    }
+}
+
 @Composable
 private fun EmptyHints(
     history: List<String>,
@@ -190,10 +301,15 @@ private fun EmptyHints(
     onUseHistory: (String) -> Unit,
     onClearHistory: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+    ) {
         if (history.isNotEmpty()) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -206,23 +322,21 @@ private fun EmptyHints(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 history.take(4).forEach { item ->
-                    AssistChip(onClick = { onUseHistory(item) }, label = { Text(item) })
+                    StylePill(label = item, selected = false, onClick = { onUseHistory(item) })
                 }
             }
             Spacer(Modifier.height(16.dp))
         }
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                HintLine("par", "前缀匹配 paragraph / parallel / party…")
-                HintLine("妨碍", "直接输中文 → prevent / hamper / interfere")
-                HintLine("running", "会自动还原成 run")
-                Text(
-                    text = "· 输错了也没关系，会给相近的词",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
+        StyleCard {
+            HintLine("par", "前缀匹配 paragraph / parallel / party…")
+            HintLine("妨碍", "直接输中文 → prevent / hamper / interfere")
+            HintLine("running", "会自动还原成 run")
+            Text(
+                text = "· 输错了也没关系，会给相近的词",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
+            )
         }
         Spacer(Modifier.height(10.dp))
         if (totalWords > 0) {
@@ -232,6 +346,7 @@ private fun EmptyHints(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -263,15 +378,14 @@ private fun FilterRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 2.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SearchFilter.entries.forEach { filter ->
-            val count = counts[filter] ?: 0
-            FilterChip(
+            StylePill(
+                label = filter.label + " " + (counts[filter] ?: 0),
                 selected = selected == filter,
                 onClick = { onSelect(filter) },
-                label = { Text(filter.label + " " + count) },
             )
         }
     }
@@ -279,31 +393,23 @@ private fun FilterRow(
 
 @Composable
 private fun ResultMeta(state: SearchUiState) {
+    val total = state.counts[SearchFilter.ALL] ?: 0
     val text = when {
         state.lemma != null -> "词形还原：" + state.query + " → " + state.lemma
-        state.matchKind == com.wordbook.domain.model.MatchKind.PREFIX -> state.counts[SearchFilter.ALL]
-            ?.let { it.toString() + " 个结果 · 前缀匹配" } ?: ""
-        else -> state.counts[SearchFilter.ALL]?.let { it.toString() + " 个结果 · 按释义匹配" } ?: ""
+        state.matchKind == MatchKind.PREFIX -> total.toString() + " 个结果 · 前缀匹配"
+        else -> total.toString() + " 个结果 · 按释义匹配"
     }
-    if (text.isNotEmpty()) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 18.dp, top = 4.dp, bottom = 8.dp),
-        )
-    }
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 18.dp, top = 6.dp, bottom = 4.dp),
+    )
 }
 
 @Composable
-private fun ResultRow(hit: SearchHit, query: String, onClick: () -> Unit, onSpeak: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+private fun ResultRow(hit: SearchHit, query: String, onSpeak: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
@@ -321,27 +427,32 @@ private fun ResultRow(hit: SearchHit, query: String, onClick: () -> Unit, onSpea
                 }
             }
             if (hit.translation.isNotBlank()) {
-                // 只显示第一行，列表才紧凑（完整释义在词义卡里看）
                 Text(
                     text = highlight(hit.translation.substringBefore("\n"), query),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 3.dp),
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }
         Spacer(Modifier.width(8.dp))
         Badge(hit.badge)
-        IconButton(onClick = onSpeak) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "发音")
-        }
+        Icon(
+            Icons.Default.PlayArrow,
+            contentDescription = "发音",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .clickable(onClick = onSpeak)
+                .padding(8.dp),
+        )
     }
 }
 
-/** 把命中的中文高亮出来（模拟图里那效果） */
-private fun highlight(text: String, query: String) = buildAnnotatedString {
+/** 把命中的中文加粗高亮（渲染图里那效果） */
+internal fun highlight(text: String, query: String) = buildAnnotatedString {
     val q = query.trim()
     if (q.isEmpty() || !text.contains(q)) {
         append(text)
@@ -355,7 +466,7 @@ private fun highlight(text: String, query: String) = buildAnnotatedString {
             break
         }
         append(text.substring(index, found))
-        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color.Unspecified)) {
             append(text.substring(found, found + q.length))
         }
         index = found + q.length
@@ -374,22 +485,15 @@ private fun Badge(badge: WordBadge) {
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
             .background(bg)
-            .padding(horizontal = 9.dp, vertical = 3.dp),
+            .padding(horizontal = 9.dp, vertical = 4.dp),
     ) {
-        Text(
-            text = badge.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = fg,
-        )
+        Text(text = badge.label, style = MaterialTheme.typography.labelSmall, color = fg)
     }
 }
 
 @Composable
 private fun NoResult(query: String) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    StyleCard {
         Text("没找到「" + query + "」", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(6.dp))
         Text(
