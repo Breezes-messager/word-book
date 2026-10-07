@@ -190,6 +190,9 @@ fun SettingsScreen(
         }
 
         Spacer(Modifier.height(12.dp))
+        RatingGuideCard()
+
+        Spacer(Modifier.height(12.dp))
         SectionCard("文章阅读") {
             Text(
                 text = "正文字号：" + (state.settings.articleFontScale * 100).roundToInt() + "%",
@@ -528,6 +531,116 @@ private fun SectionCard(title: String, content: @Composable () -> Unit) {
             Spacer(Modifier.height(12.dp))
             content()
         }
+    }
+}
+
+/**
+ * 「评分怎么选」——折叠项，默认收起。
+ * 学习页只能看到按钮上的预估间隔，这里解释什么情况该点哪一档。
+ */
+@Composable
+private fun RatingGuideCard() {
+    var expanded by remember { mutableStateOf(false) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // 整个标题行都可点（点"评分怎么选"这几个字也能展开）
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                StyleSectionTitle("评分怎么选", modifier = Modifier.weight(1f))
+                Text(
+                    text = if (expanded) "收起 ▴" else "展开 ▾",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    // 马克笔风格标题带实心色块，留点间距别贴太紧
+                    modifier = Modifier.padding(start = 10.dp),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "判断标准是「刚才回忆得有多费劲」，不是这个词难不难",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            if (!expanded) return@Column
+
+            Spacer(Modifier.height(10.dp))
+        RatingGuideRow("重来", "没想起来，或者想错了")
+        RatingGuideRow("困难", "想起来了，但很吃力、犹豫、靠猜")
+        RatingGuideRow("良好", "正常想起来了 —— 大部分卡都该点这个")
+        RatingGuideRow("简单", "秒答，毫不费力")
+
+        Spacer(Modifier.height(10.dp))
+        GuideSubTitle("两组最容易混的")
+        GuideBullet("重来 vs 困难：分界线是「有没有想起来」。想起了正确释义、只是慢 → 困难")
+        GuideBullet("良好 vs 简单：分界线是「费不费劲」。扫一眼就知道 → 简单")
+
+        Spacer(Modifier.height(10.dp))
+        GuideSubTitle("实用建议")
+        GuideBullet("新词本来就会 → 直接点「简单」，跳到 8 天后，省掉 1 分钟 / 10 分钟的重复")
+        GuideBullet("「重来」别连着点：同一张卡本轮只会补一次队，第二次再点就直接过了")
+        GuideBullet("别为了早点结束点「良好」—— FSRS 靠你的评分推算难度和记忆强度，虚报会让下次真的想不起来")
+        GuideBullet("按钮上的分钟数是 FSRS 预估的下次间隔；「简单」常常是「良好」的几十倍，别随手点")
+
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = "长期看，「重来」占 10~20% 属于正常。如果长期超过三成，多半不是你的问题，" +
+                    "而是每日新词数设多了，可以去上面调低一点。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RatingGuideRow(name: String, desc: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(56.dp),
+        )
+        Text(
+            text = desc,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun GuideSubTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+    )
+}
+
+@Composable
+private fun GuideBullet(text: String) {
+    Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+        Text(
+            text = "· ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

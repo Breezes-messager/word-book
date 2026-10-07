@@ -42,6 +42,16 @@ class StudyViewModel @Inject constructor(
     val state: StateFlow<StudyUiState> = _state.asStateFlow()
 
     private var queue: List<StudyWord> = emptyList()
+
+    /** 在 queue 里的当前位置（"重来"补队会让 queue 变长，所以位置和显示进度要分开） */
+    private var pos: Int = 0
+
+    /** 本轮真正完成的不重复卡片；对外显示的进度只认这个 */
+    private val completedIds = mutableSetOf<Long>()
+
+    /** 本轮涉及的不重复卡片总数。对用户恒定不变 —— 点"重来"补队也不会让分母变大 */
+    private var distinctTotal: Int = 0
+
     private var cardShownAt: Long = System.currentTimeMillis()
 
     /** 本轮会话里已经因为“重来”而重新入队的卡，避免无限循环 */
@@ -51,6 +61,9 @@ class StudyViewModel @Inject constructor(
         if (_state.value.total > 0 && _state.value.mode == mode && !_state.value.finished) return
         _state.value = StudyUiState(loading = true, mode = mode)
         queue = emptyList()
+        pos = 0
+        distinctTotal = 0
+        completedIds.clear()
         requeued.clear()
         viewModelScope.launch {
             try {
@@ -62,12 +75,13 @@ class StudyViewModel @Inject constructor(
                     _state.value = StudyUiState(loading = false, mode = mode, empty = true)
                     return@launch
                 }
+                distinctTotal = queue.map { it.card.id }.distinct().size
                 _state.value = StudyUiState(
                     loading = false,
                     mode = mode,
                     current = queue.first(),
                     index = 0,
-                    total = queue.size,
+                    total = distinctTotal,
                 )
                 cardShownAt = System.currentTimeMillis()
                 loadPreviews()
@@ -99,10 +113,15 @@ class StudyViewModel @Inject constructor(
                     )
                 }
 
-                // “重来”的卡在本轮里再出现一次（每张卡最多一次），符合学习步的逻辑
-                if (rating == Rating.AGAIN && requeued.add(current.card.id)) {
-                    val refreshed = studyRepository.cardById(current.card.id) ?: current.card
+                // “重来”的卡在本轮里再出现一次（每张卡最多一次），符合学习步的逻辑。
+                // 注意：补队只影响内部队列，不会让右上角的总数变大。
+                val cardId = current.card.id
+                if (rating == Rating.AGAIN && requeued.add(cardId)) {
+                    val refreshed = studyRepository.cardById(cardId) ?: current.card
                     queue = queue + current.copy(card = refreshed)
+                } else {
+                    // 不是“重来”，或者这张卡本轮已经补过一次队了 → 这张卡算完成
+                    completedIds.add(cardId)
                 }
                 advance()
             } catch (t: Throwable) {
@@ -132,17 +151,22 @@ class StudyViewModel @Inject constructor(
     }
 
     private suspend fun advance() {
-        val next = _state.value.index + 1
+        val next = pos + 1
+        // 显示的进度 = 已完成的不重复卡片数（+1 表示"正在做第几张"），分母恒定
+        val done = completedIds.size
         if (next >= queue.size) {
-            _state.update { it.copy(finished = true, current = null, index = next) }
+            _state.update {
+                it.copy(finished = true, current = null, index = done, total = distinctTotal)
+            }
             return
         }
+        pos = next
         val nextCard = queue[next]
         _state.update {
             it.copy(
                 current = nextCard,
-                index = next,
-                total = queue.size,
+                index = done,
+                total = distinctTotal,
                 flipped = false,
                 previews = emptyMap(),
             )

@@ -80,7 +80,10 @@ fun StudyScreen(
                 message = if (mode == SessionMode.NEW) "今天的新词已经学完了" else "现在没有到期的复习卡",
                 onBack = onBack,
             )
-            state.finished -> EmptyBox(message = "本轮完成，共 " + state.total + " 个词", onBack = onBack)
+            state.finished -> EmptyBox(
+                message = "本轮完成，共 " + state.total + " 个词",
+                onBack = onBack,
+            )
             state.current != null -> {
                 Box(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
                     StudyCardView(
