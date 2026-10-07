@@ -44,6 +44,7 @@ class SettingsRepository @Inject constructor(
         val darkMode = stringPreferencesKey("dark_mode")
         val articleFontScale = floatPreferencesKey("article_font_scale")
         val articleLineHeightScale = floatPreferencesKey("article_line_height_scale")
+        val lastArticleSelection = stringPreferencesKey("last_article_selection")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -62,6 +63,7 @@ class SettingsRepository @Inject constructor(
             darkMode = DarkModeSetting.fromName(prefs[Keys.darkMode]),
             articleFontScale = prefs[Keys.articleFontScale] ?: 1.0f,
             articleLineHeightScale = prefs[Keys.articleLineHeightScale] ?: 1.0f,
+            lastArticleSelection = prefs[Keys.lastArticleSelection] ?: "",
         )
     }
 
@@ -72,6 +74,11 @@ class SettingsRepository @Inject constructor(
     suspend fun setDailyReviewLimit(value: Int) = context.dataStore.edit { it[Keys.dailyReviewLimit] = value.coerceAtLeast(0) }
     suspend fun setShuffleNewWords(value: Boolean) = context.dataStore.edit { it[Keys.shuffleNewWords] = value }
     suspend fun setArticleStyle(style: ArticleStyle) = context.dataStore.edit { it[Keys.articleStyle] = style.label }
+
+    /** 记住上次看的文章（"日期:批次"），切 Tab 回来时恢复 */
+    suspend fun setLastArticleSelection(value: String) = context.dataStore.edit {
+        it[Keys.lastArticleSelection] = value
+    }
     suspend fun setApiKey(key: String) = context.dataStore.edit { it[Keys.apiKey] = key.trim() }
     suspend fun setReminderEnabled(value: Boolean) = context.dataStore.edit { it[Keys.reminderEnabled] = value }
     suspend fun setReminderTime(hour: Int, minute: Int) = context.dataStore.edit {

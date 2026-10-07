@@ -78,7 +78,10 @@ class ArticleViewModel @Inject constructor(
                 )
 
                 if (today.isNotEmpty()) {
-                    _state.value = withArticle(base, today.first(), selectedIndex = 0)
+                    // 恢复上次看的那一篇：切到别的 Tab 再回来时 ViewModel 会重建，
+                    // 不能总是回到第一篇
+                    val index = restoreIndex(settings.lastArticleSelection, today)
+                    _state.value = withArticle(base, today[index], selectedIndex = index)
                     return@launch
                 }
 
@@ -132,6 +135,20 @@ class ArticleViewModel @Inject constructor(
     fun selectArticle(index: Int) {
         val article = _state.value.todayArticles.getOrNull(index) ?: return
         _state.value = withArticle(_state.value, article, index)
+        viewModelScope.launch {
+            settingsRepository.setLastArticleSelection(selectionKey(article))
+        }
+    }
+
+    /** "日期:批次"，同一天里定位到具体那一篇 */
+    private fun selectionKey(article: ArticleEntity): String =
+        article.dateKey + ":" + article.batchIndex
+
+    /** 从上次的记录里找出今天的第几篇；找不到就回到第一篇 */
+    private fun restoreIndex(saved: String, today: List<ArticleEntity>): Int {
+        if (saved.isBlank()) return 0
+        val index = today.indexOfFirst { selectionKey(it) == saved }
+        return if (index >= 0) index else 0
     }
 
     fun generate(regenerate: Boolean = false) {

@@ -38,4 +38,9 @@ data class AppSettings(
     val articleFontScale: Float = 1.0f,
     /** 文章行距倍率（1.0–1.9） */
     val articleLineHeightScale: Float = 1.0f,
+    /**
+     * 上次看的文章，格式 "日期:批次"，例如 "2026-10-07:3"。
+     * 切到别的 Tab 再回来时，文章页的 ViewModel 会重建，靠它恢复上次看的那一篇。
+     */
+    val lastArticleSelection: String = "",
 )
