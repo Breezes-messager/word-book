@@ -233,35 +233,6 @@ def clean_word(value) -> str:
     return re.sub(r"\s+", " ", clean(value))
 
 
-def normalize_phonetic(value) -> str:
-    """
-    把音标里的非标准写法换成规范 IPA 符号。
-
-    词书（KyleBing/dict）和 ECDICT 都用 ASCII 字符凑音标，直接显示会显得很业余：
-      '  →  ˈ   主重音（3479/5007 条用撇号）
-      ,  →  ˌ   次重音（只在开头 / 空格后，避免误伤 "ˈnɑmɪk, ˌɛkə" 里的分隔逗号）
-      .  →  ˌ   ECDICT 用点当次重音
-      ә  →  ə   西里尔字母 schwa（U+04D9）长得像但不是拉丁 ə（U+0259），字体渲染不一致
-      :  →  ː   长音符
-    """
-    text = clean(value)
-    if not text:
-        return ""
-
-    text = text.replace("\u04d9", "\u0259").replace(":", "\u02d0")
-    text = text.replace("'", "\u02c8")
-
-    out = []
-    for index, ch in enumerate(text):
-        prev = text[index - 1] if index else " "
-        nxt = text[index + 1] if index + 1 < len(text) else ""
-        if ch in ",." and (index == 0 or prev == " ") and nxt != " ":
-            out.append("\u02cc")
-        else:
-            out.append(ch)
-    return "".join(out)
-
-
 def clean_multiline(value) -> str:
     """
     ECDICT 的 translation / definition 字段里，换行是**字面量 \\n（反斜杠 + n 两个字符）**，
@@ -343,8 +314,8 @@ def parse_book(path: str, deck: str, limit: int):
                 rel_word.append({"pos": clean(group.get("pos")), "words": words})
 
         out.append((headword, rank, {
-            "phoneticUs": normalize_phonetic(content.get("usphone")),
-            "phoneticUk": normalize_phonetic(content.get("ukphone")),
+            "phoneticUs": clean(content.get("usphone")),
+            "phoneticUk": clean(content.get("ukphone")),
             "transCn": "\n".join(cn_lines),
             "transEn": "\n".join(en_lines),
             "examplesJson": json.dumps(examples, ensure_ascii=False) if examples else "",
@@ -387,8 +358,8 @@ def parse_fallback_book(path: str, limit: int):
             if en:
                 phrases.append({"en": en, "cn": clean(p.get("pCn") or p.get("translation"))})
         out.append((headword, i + 1, {
-            "phoneticUs": normalize_phonetic(entry.get("usphone") or entry.get("phonetic")),
-            "phoneticUk": normalize_phonetic(entry.get("ukphone")),
+            "phoneticUs": clean(entry.get("usphone") or entry.get("phonetic")),
+            "phoneticUk": clean(entry.get("ukphone")),
             "transCn": "\n".join(cn_lines),
             "transEn": "\n".join(en_lines),
             "examplesJson": json.dumps(examples, ensure_ascii=False) if examples else "",
@@ -590,7 +561,7 @@ def build_dict_db(kind: str, path: str, out_path: str):
             continue
         batch.append((
             word,
-            normalize_phonetic(row.get("phonetic")),
+            clean(row.get("phonetic")),
             clean_multiline(row.get("definition")),
             clean_multiline(row.get("translation")),
             clean(row.get("pos")),
