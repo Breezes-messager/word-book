@@ -95,7 +95,7 @@ fun ArticleScreen(
 
         GenerationCard(
             state = state,
-            onGenerate = { viewModel.generate(regenerate = state.hasTodayArticle) },
+            onGenerate = viewModel::generate,
             onOpenSettings = onOpenSettings,
         )
 
@@ -124,7 +124,7 @@ fun ArticleScreen(
         state.error?.let { error ->
             Spacer(Modifier.height(8.dp))
             Text(error, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = { viewModel.generate(regenerate = false) }) { Text("重试") }
+            TextButton(onClick = viewModel::generate) { Text("重试") }
         }
 
         Spacer(Modifier.height(12.dp))
@@ -184,15 +184,21 @@ fun ArticleScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 StyleSectionTitle("历史文章")
-                Text(
-                    text = if (state.unreadCount > 0) state.unreadCount.toString() + " 篇未读" else "全部读过",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (state.unreadCount > 0) {
-                        MaterialTheme.colorScheme.tertiary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (state.unreadCount > 0) state.unreadCount.toString() + " 篇未读" else "全部读过",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (state.unreadCount > 0) {
+                            MaterialTheme.colorScheme.tertiary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    // v1.7.0 之前的文章没有"已读"概念，攒多了要能一键清掉
+                    if (state.unreadCount > 0) {
+                        TextButton(onClick = viewModel::markAllRead) { Text("全标已读") }
+                    }
+                }
             }
             Spacer(Modifier.height(8.dp))
             state.history.forEach { article ->
@@ -232,10 +238,8 @@ private fun GenerationCard(
                         append("，最多可生成 ").append(state.batchCount).append(" 篇文章")
                     }
                     if (state.todayArticles.isNotEmpty()) {
-                        append("（今天已生成 ").append(state.todayArticles.size).append(" 篇")
-                        val left = state.batchCount - state.todayArticles.size
-                        if (left > 0) append("，还能再生成 ").append(left).append(" 篇")
-                        append("）")
+                        // 生成是"替换"语义，所以这里不能写"还能再生成 N 篇" —— 那是做不到的承诺
+                        append("；今天已生成 ").append(state.todayArticles.size).append(" 篇，重新生成会替换掉")
                     }
                 },
                 style = MaterialTheme.typography.bodyLarge,

@@ -44,6 +44,27 @@ class ArticleRepository @Inject constructor(
     suspend fun unreadArticleCount(): Int = articleDao.unreadCount()
 
     /**
+     * 清掉"同一天同一批次"的重复文章，返回清掉的篇数。
+     * 幂等：没有重复时返回 0。文章页加载时自动跑一次，用户会在提示里看到清了几篇。
+     */
+    suspend fun cleanupDuplicateArticles(): Int {
+        if (articleDao.duplicateCount() == 0) return 0
+        val before = articleDao.totalCount()
+        articleDao.deleteDuplicates()
+        return before - articleDao.totalCount()
+    }
+
+    /**
+     * 把所有没读过的旧文章标记为已读。
+     * v1.7.0 之前没有"已读"概念，历史文章全是未读 —— 攒到几十篇时这个按钮能一键清干净。
+     */
+    suspend fun markAllRead(): Int {
+        val unread = articleDao.unreadCount()
+        if (unread > 0) articleDao.markAllRead(System.currentTimeMillis())
+        return unread
+    }
+
+    /**
      * 标记已读。只记第一次 —— 重复打开不会把「阅读时间」往后推。
      * 返回是否真的从"未读"变成了"已读"，界面据此决定要不要刷新。
      */
@@ -74,9 +95,15 @@ class ArticleRepository @Inject constructor(
     /**
      * 生成今天的全部文章。每篇生成成功后立刻落盘（Room 存原始 JSON），
      * 某篇失败不影响已经生成的内容。
+     *
+     * **无论今天有没有生成过，成功后都会先删掉今天的旧文章再写入** —— 也就是"替换"语义。
+     *
+     * 以前这个"删不删"是由界面状态（`hasTodayArticle`）决定的，有个漏招：
+     * App 刚启动、`load()` 还没跑完时界面状态里是空的，此时点生成会走"追加"分支，
+     * 于是同一天的文章越攒越多（用户报的「75 篇未读」就是这么来的）。
+     * 现在改成只认数据库，从根上不可能重复。
      */
     suspend fun generateToday(
-        regenerate: Boolean = false,
         onProgress: suspend (done: Int, total: Int) -> Unit = { _, _ -> },
     ): GenerationReport {
         val settings = settingsRepository.current()
@@ -122,7 +149,8 @@ class ArticleRepository @Inject constructor(
             return GenerationReport(0, emptyList(), lastError, failed)
         }
 
-        if (regenerate) articleDao.deleteByDay(todayKey())
+        // 先删后写：保证"今天的文章"永远只有本次生成这一套
+        articleDao.deleteByDay(todayKey())
         val saved = generated.mapIndexed { index, (content, batch) ->
             saveArticle(content, batch, settings.articleStyle.label, index)
         }

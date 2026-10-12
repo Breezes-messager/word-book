@@ -334,6 +334,23 @@ interface ArticleDao {
     @Query("SELECT COUNT(*) FROM articles WHERE readAt IS NULL")
     suspend fun unreadCount(): Int
 
+    @Query("UPDATE articles SET readAt = :at WHERE readAt IS NULL")
+    suspend fun markAllRead(at: Long)
+
+    /**
+     * 同一天同一个批次号出现多次 = 重复生成留下的垃圾。
+     * 早于 v1.7.1 的版本在「App 刚启动还没加载完就点生成」时会走追加分支，攒出这种数据。
+     */
+    @Query(
+        "SELECT COUNT(*) FROM articles WHERE id NOT IN " +
+            "(SELECT MAX(id) FROM articles GROUP BY dateKey, batchIndex)"
+    )
+    suspend fun duplicateCount(): Int
+
+    /** 只保留每天每批次最新的一份（article_words 有级联删除，不会留孤儿） */
+    @Query("DELETE FROM articles WHERE id NOT IN (SELECT MAX(id) FROM articles GROUP BY dateKey, batchIndex)")
+    suspend fun deleteDuplicates()
+
     @Query("SELECT COUNT(*) FROM articles")
     suspend fun totalCount(): Int
 

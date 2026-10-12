@@ -68,6 +68,8 @@ class ArticleViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch {
             try {
+                // 早期版本重复生成留下的垃圾，第一次打开文章页时清掉（幂等）
+                val deduped = articleRepository.cleanupDuplicateArticles()
                 val settings = settingsRepository.current()
                 val todayWords = articleRepository.todayStudiedWords()
                 val batches = articleRepository.planBatches(todayWords)
@@ -84,6 +86,7 @@ class ArticleViewModel @Inject constructor(
                     lineHeightScale = settings.articleLineHeightScale,
                     history = articleRepository.recentArticlesNow(HISTORY_LIMIT),
                     unreadCount = articleRepository.unreadArticleCount(),
+                    notice = if (deduped > 0) "清理了 " + deduped + " 篇重复生成的文章" else null,
                 )
 
                 if (today.isNotEmpty()) {
@@ -175,14 +178,15 @@ class ArticleViewModel @Inject constructor(
         return if (index >= 0) index else 0
     }
 
-    fun generate(regenerate: Boolean = false) {
+    /** 生成（或重新生成）今天的文章。替换语义在仓库层保证，界面不用传"要不要删" */
+    fun generate() {
         if (_state.value.generating) return
         viewModelScope.launch {
             _state.update {
                 it.copy(generating = true, error = null, notice = null, progressText = "正在准备…")
             }
             try {
-                val report = articleRepository.generateToday(regenerate) { done, total ->
+                val report = articleRepository.generateToday { done, total ->
                     _state.update { it.copy(progressText = "正在生成第 " + done + " / " + total + " 篇…") }
                 }
                 val today = articleRepository.todayArticles()
@@ -221,6 +225,18 @@ class ArticleViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    /** 把历史文章全标为已读（v1.7.0 之前的旧文章都是未读，一次清掉） */
+    fun markAllRead() {
+        viewModelScope.launch {
+            val count = articleRepository.markAllRead()
+            _state.value = _state.value.copy(
+                history = articleRepository.recentArticlesNow(HISTORY_LIMIT),
+                unreadCount = articleRepository.unreadArticleCount(),
+                notice = if (count > 0) "已把 " + count + " 篇文章标为已读" else "没有未读文章",
+            )
         }
     }
 
