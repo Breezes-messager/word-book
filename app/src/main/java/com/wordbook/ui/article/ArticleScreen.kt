@@ -1,13 +1,17 @@
 package com.wordbook.ui.article
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -30,16 +34,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wordbook.data.db.ArticleEntity
 import com.wordbook.domain.article.ArticleContent
 import com.wordbook.domain.article.ArticlePlan
 import com.wordbook.domain.lemmatize.WordNormalizer
 import com.wordbook.ui.components.ArticleParagraph
+import com.wordbook.ui.components.StyleSectionTitle
 import com.wordbook.ui.dict.DictBottomSheet
 import com.wordbook.ui.dict.DictSheetViewModel
 import com.wordbook.ui.theme.articleBodyStyle
@@ -58,6 +67,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ArticleScreen(
     onOpenSettings: () -> Unit,
+    onOpenReader: (Long) -> Unit,
     viewModel: ArticleViewModel = hiltViewModel(),
     dictViewModel: DictSheetViewModel = hiltViewModel(),
 ) {
@@ -161,6 +171,37 @@ fun ArticleScreen(
                 )
             }
             else -> Text("还没有文章", style = MaterialTheme.typography.bodyLarge)
+        }
+
+        // 历史文章：文章都留在本地，之前读过的随时能翻回来
+        if (state.history.isNotEmpty()) {
+            Spacer(Modifier.height(20.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                StyleSectionTitle("历史文章")
+                Text(
+                    text = if (state.unreadCount > 0) state.unreadCount.toString() + " 篇未读" else "全部读过",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.unreadCount > 0) {
+                        MaterialTheme.colorScheme.tertiary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            state.history.forEach { article ->
+                HistoryArticleRow(
+                    article = article,
+                    isReading = article.id == state.todayArticles.getOrNull(state.selectedIndex)?.id,
+                    onClick = { onOpenReader(article.id) },
+                )
+            }
         }
 
         Spacer(Modifier.height(32.dp))
@@ -289,8 +330,9 @@ private fun SmallStepButton(label: String, onClick: () -> Unit) {
     }
 }
 
+/** 正文渲染。文章页和历史阅读器共用，改一处两边都变 */
 @Composable
-private fun ArticleBody(
+internal fun ArticleBody(
     content: ArticleContent,
     translationExpanded: Boolean,
     onToggleTranslation: () -> Unit,
@@ -347,9 +389,65 @@ private fun ArticleBody(
     }
 }
 
+/**
+ * 历史文章一行：未读点 + 标题 + 日期/风格。
+ * 未读的标题加粗，一眼能看出哪些还没读。
+ */
+@Composable
+private fun HistoryArticleRow(
+    article: ArticleEntity,
+    isReading: Boolean,
+    onClick: () -> Unit,
+) {
+    val unread = article.readAt == null
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .clip(CircleShape)
+                .background(
+                    when {
+                        unread -> MaterialTheme.colorScheme.tertiary
+                        isReading -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.outlineVariant
+                    }
+                ),
+        )
+        Spacer(Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = article.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = if (unread) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = article.dateKey +
+                    " · " + article.style +
+                    if (article.batchIndex > 0) " · 第 " + (article.batchIndex + 1) + " 篇" else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            text = if (isReading) "正在看" else "›",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 private val footerFormatter = DateTimeFormatter.ofPattern("yyyy 年 M 月 d 日 HH:mm")
 
-private fun buildFooter(dateKey: String, createdAt: Long?, isSample: Boolean, style: String): String {
+internal fun buildFooter(dateKey: String, createdAt: Long?, isSample: Boolean, style: String): String {
     if (isSample) return "这是内置示例文章（含 running / went 等变形词），配置 API Key 后可以生成自己的文章"
     val time = createdAt?.let {
         Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).format(footerFormatter)

@@ -3,7 +3,6 @@ package com.wordbook.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wordbook.data.db.ArticleEntity
-import com.wordbook.data.db.WordEntity
 import com.wordbook.data.repo.StatsRepository
 import com.wordbook.data.repo.StudyRepository
 import com.wordbook.data.repo.TodayTask
@@ -25,7 +24,6 @@ data class HomeUiState(
     val task: TodayTask? = null,
     val totalWords: Int = 0,
     val streak: Int = 0,
-    val previewWords: List<WordEntity> = emptyList(),
     val latestArticle: ArticleEntity? = null,
     val error: String? = null,
 )
@@ -78,7 +76,6 @@ class HomeViewModel @Inject constructor(
                 task = task,
                 totalWords = wordRepository.totalCount().toInt(),
                 streak = statsRepository.streak(),
-                previewWords = wordRepository.firstWords(20),
                 // 注意：Room 的 Flow 会一直观察数据库，这里只取当前值，必须用 first()
                 latestArticle = statsRepository.recentArticles(1).first().firstOrNull(),
                 error = err,

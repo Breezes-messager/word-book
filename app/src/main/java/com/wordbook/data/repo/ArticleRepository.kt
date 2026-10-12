@@ -36,6 +36,24 @@ class ArticleRepository @Inject constructor(
 
     fun recentArticles(limit: Int): Flow<List<ArticleEntity>> = articleDao.recentFlow(limit)
 
+    /** 历史文章（含今天），最新在前 —— 文章页的「历史文章」用它 */
+    suspend fun recentArticlesNow(limit: Int): List<ArticleEntity> = articleDao.recent(limit)
+
+    suspend fun articleById(id: Long): ArticleEntity? = articleDao.byId(id)
+
+    suspend fun unreadArticleCount(): Int = articleDao.unreadCount()
+
+    /**
+     * 标记已读。只记第一次 —— 重复打开不会把「阅读时间」往后推。
+     * 返回是否真的从"未读"变成了"已读"，界面据此决定要不要刷新。
+     */
+    suspend fun markRead(id: Long): Boolean {
+        val before = articleDao.byId(id)?.readAt
+        if (before != null) return false
+        articleDao.markRead(id, System.currentTimeMillis())
+        return true
+    }
+
     fun contentOf(article: ArticleEntity): ArticleContent? = ArticleJsonParser.fromJsonOrNull(article.contentJson)
 
     suspend fun articleCount(): Int = articleDao.count()

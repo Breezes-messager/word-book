@@ -34,6 +34,13 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+/** v3 → v4：文章新增「读过没」标记，历史文章列表要靠它区分未读 / 已读 */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE articles ADD COLUMN readAt INTEGER")
+    }
+}
+
 @Database(
     entities = [
         WordEntity::class,
@@ -43,7 +50,7 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         ArticleWordEntity::class,
         WordContextEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -55,5 +62,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "wordbook.db"
+
+        /** 当前 schema 版本。迁移测试和 release 前自检都用它，避免两处写死不同步 */
+        const val LATEST_VERSION = 4
     }
 }

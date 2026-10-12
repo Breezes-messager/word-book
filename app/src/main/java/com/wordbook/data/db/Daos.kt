@@ -233,10 +233,35 @@ interface ReviewLogDao {
     @Query("SELECT * FROM review_logs WHERE dayKey = :dayKey ORDER BY reviewedAt DESC")
     suspend fun byDay(dayKey: String): List<ReviewLogEntity>
 
-    @Query("SELECT COUNT(*) FROM review_logs WHERE dayKey = :dayKey AND stateBefore = 0")
+    /**
+     * 今日**新学**的卡片数。
+     *
+     * 数的是"首次评分"的日志（stateBefore = 0）。一张新卡当天再被评几次都不会重复计数，
+     * 因为从第二次起 stateBefore 就不是 0 了。
+     */
+    @Query("SELECT COUNT(DISTINCT wordId) FROM review_logs WHERE dayKey = :dayKey AND stateBefore = 0")
     suspend fun newCountByDay(dayKey: String): Int
 
-    @Query("SELECT COUNT(*) FROM review_logs WHERE dayKey = :dayKey AND stateBefore != 0")
+    /**
+     * 今日**复习**的卡片数。
+     *
+     * 两个关键点，少了任何一个数字都会和界面对不上：
+     *  1. `DISTINCT wordId` —— 数**卡片张数**，不是评分次数。一张卡点「重来」会重新入队，
+     *     再评一次就多一条日志，按次数算会凭空翻倍。
+     *  2. 排除"今天才第一次学"的卡 —— 它们已经算进「新词」了，不该同时出现在「已复习」里，
+     *     否则首页两个数字重叠，而且当天的新词会白白吃掉「每日复习上限」。
+     */
+    @Query(
+        """
+        SELECT COUNT(DISTINCT l.wordId) FROM review_logs l
+        WHERE l.dayKey = :dayKey
+          AND l.stateBefore != 0
+          AND NOT EXISTS (
+              SELECT 1 FROM review_logs e
+              WHERE e.wordId = l.wordId AND e.dayKey = :dayKey AND e.stateBefore = 0
+          )
+        """
+    )
     suspend fun reviewCountByDay(dayKey: String): Int
 
     @Query("SELECT COUNT(*) FROM review_logs WHERE dayKey = :dayKey")
@@ -295,6 +320,22 @@ interface ArticleDao {
 
     @Query("SELECT * FROM articles ORDER BY createdAt DESC LIMIT :limit")
     fun recentFlow(limit: Int): Flow<List<ArticleEntity>>
+
+    /** 历史文章（含今天），最新的在前 */
+    @Query("SELECT * FROM articles ORDER BY createdAt DESC LIMIT :limit")
+    suspend fun recent(limit: Int): List<ArticleEntity>
+
+    /**
+     * 标记为已读。加了 `readAt IS NULL` 条件，重复打开不会覆盖第一次的阅读时间。
+     */
+    @Query("UPDATE articles SET readAt = :at WHERE id = :id AND readAt IS NULL")
+    suspend fun markRead(id: Long, at: Long)
+
+    @Query("SELECT COUNT(*) FROM articles WHERE readAt IS NULL")
+    suspend fun unreadCount(): Int
+
+    @Query("SELECT COUNT(*) FROM articles")
+    suspend fun totalCount(): Int
 
     @Query("SELECT * FROM articles WHERE id = :id")
     suspend fun byId(id: Long): ArticleEntity?

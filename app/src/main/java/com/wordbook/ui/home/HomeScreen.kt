@@ -39,21 +39,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.draw.clip
-import com.wordbook.ui.components.WordRow
-import com.wordbook.util.rememberSpeaker
 
 @Composable
 fun HomeScreen(
     onStartStudy: () -> Unit,
     onStartReview: () -> Unit,
     onOpenArticle: () -> Unit,
-    onOpenWordList: () -> Unit,
     onOpenStats: () -> Unit,
     onOpenSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val speaker = rememberSpeaker()
 
     LaunchedEffect(Unit) { viewModel.refresh() }
 
@@ -141,19 +137,8 @@ fun HomeScreen(
                     }
                     Spacer(Modifier.height(8.dp))
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    StyleSectionTitle("词书预览（前 20 个词）")
-                    TextButton(onClick = onOpenWordList) { Text("查看全部") }
-                }
             }
             HorizontalDivider()
-        }
-        items(state.previewWords, key = { it.id }) { word ->
-            WordRow(word = word, onSpeak = speaker::speak)
         }
         item {
             Spacer(Modifier.height(24.dp))

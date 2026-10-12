@@ -148,6 +148,11 @@ data class ArticleEntity(
     val style: String,
     val targetWordCount: Int,
     val createdAt: Long,
+    /**
+     * 首次读完这篇的时间戳（null = 还没读过）。
+     * 只记第一次，之后再打开不会刷新 —— 这样"哪天读的"是稳定的。
+     */
+    val readAt: Long? = null,
 )
 
 /** 文章与目标词的关联，用于统计与点击查词 */

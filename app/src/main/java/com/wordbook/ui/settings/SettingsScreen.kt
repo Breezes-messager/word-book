@@ -218,6 +218,23 @@ fun SettingsScreen(
                 }
             }
             Spacer(Modifier.height(8.dp))
+            // 选中哪套就把它的说明显示出来 —— 光看 chip 上的名字猜不出会生成什么
+            Text(
+                text = state.settings.articleStyle.brief,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = if (state.settings.articleStyle.examLevel) {
+                    "考研档：380–450 词，长难句密集，会出少量超纲词 —— 按近 5 年真题题源与题材分布设计"
+                } else {
+                    "轻松档：短篇好读。想要考研真题难度，选「考研·经济 / 社科 / 科技 / 文化教育」"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = "每天用学过的词生成文章，每篇 " + 5 + "–20 个目标词；今天学的词少于 5 个时不能生成",
                 style = MaterialTheme.typography.bodyMedium,

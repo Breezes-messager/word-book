@@ -40,10 +40,17 @@ data class ArticleUiState(
     val error: String? = null,
     val fontScale: Float = 1.0f,
     val lineHeightScale: Float = 1.0f,
+    /** 历史文章（含今天），最新的在前 */
+    val history: List<ArticleEntity> = emptyList(),
+    /** 其中还没读过的篇数 */
+    val unreadCount: Int = 0,
 ) {
     val canGenerate: Boolean get() = todayWordCount >= ArticlePlan.MIN_WORDS
     val hasTodayArticle: Boolean get() = todayArticles.isNotEmpty()
 }
+
+/** 历史文章列表最多列这么多篇 */
+private const val HISTORY_LIMIT = 30
 
 @HiltViewModel
 class ArticleViewModel @Inject constructor(
@@ -75,13 +82,19 @@ class ArticleViewModel @Inject constructor(
                     style = settings.articleStyle.label,
                     fontScale = settings.articleFontScale,
                     lineHeightScale = settings.articleLineHeightScale,
+                    history = articleRepository.recentArticlesNow(HISTORY_LIMIT),
+                    unreadCount = articleRepository.unreadArticleCount(),
                 )
 
                 if (today.isNotEmpty()) {
                     // 恢复上次看的那一篇：切到别的 Tab 再回来时 ViewModel 会重建，
                     // 不能总是回到第一篇
                     val index = restoreIndex(settings.lastArticleSelection, today)
-                    _state.value = withArticle(base, today[index], selectedIndex = index)
+                    val shown = today[index]
+                    // 正在看的这篇就算读过了，历史列表里的未读标记要跟着更新
+                    articleRepository.markRead(shown.id)
+                    _state.value = withArticle(base, shown, selectedIndex = index)
+                        .withFreshHistory()
                     return@launch
                 }
 
@@ -137,8 +150,19 @@ class ArticleViewModel @Inject constructor(
         _state.value = withArticle(_state.value, article, index)
         viewModelScope.launch {
             settingsRepository.setLastArticleSelection(selectionKey(article))
+            articleRepository.markRead(article.id)
+            _state.value = _state.value.withFreshHistory()
         }
     }
+
+    /**
+     * 重新读一遍历史文章 + 未读数，并保持当前正在看的内容不变。
+     * 直接改 _state 里的这两个字段，避免整页重建导致正在读的文章跳走。
+     */
+    private suspend fun ArticleUiState.withFreshHistory(): ArticleUiState = copy(
+        history = articleRepository.recentArticlesNow(HISTORY_LIMIT),
+        unreadCount = articleRepository.unreadArticleCount(),
+    )
 
     /** "日期:批次"，同一天里定位到具体那一篇 */
     private fun selectionKey(article: ArticleEntity): String =
@@ -185,7 +209,9 @@ class ArticleViewModel @Inject constructor(
                         },
                     )
                 }
+                articleRepository.markRead(today.first().id)
                 withArticle(_state.value, today.first(), 0).let { _state.value = it }
+                _state.value = _state.value.withFreshHistory()
             } catch (t: Throwable) {
                 _state.update {
                     it.copy(

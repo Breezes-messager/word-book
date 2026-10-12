@@ -104,26 +104,51 @@ class ArticleGenerator @Inject constructor(
         else -> DeepSeekException("生成失败：" + (t.message ?: t.javaClass.simpleName), cause = t)
     }
 
-    /** 按需求文档给出的提示词模板拼装 */
+    /**
+     * 拼装给模型的提示词。
+     *
+     * 考研真题档（[ArticleStyle.examLevel]）会把难度显式顶上去：380–450 词、至少 4 个长难句、
+     * 允许少量超纲词、作者态度隐含。
+     *
+     * 旧模板写的是「严禁使用明显超纲的生僻词」+「3–5 段、每段 2–4 句」，
+     * 结果每篇只有 150–250 词、几乎全是简单句 —— 这就是「文章难度偏低」的根源。
+     */
     fun buildPrompt(targetWords: List<String>, knownWords: List<String>, style: ArticleStyle): String {
         val target = targetWords.joinToString("、")
         val known = knownWords.joinToString(", ")
-        return listOf(
-            "你是一位英语教学文章作者。请为一位中国考研学生写一篇英文短文。",
+
+        val rules = mutableListOf<String>()
+        rules += "目标词要自然地融入上下文，不要生硬堆砌，也不要写成词语接龙；" +
+            "可以按语法需要改变时态、单复数或词形，不必强用原形。"
+        rules += "风格：" + style.label + "。" + style.brief
+        if (style.examLevel) {
+            rules += "词汇难度对标考研英语（一）真题：以考研大纲词汇为主体，" +
+                "允许少量（不超过 5%）超纲词 —— 真题里本来就有，不必刻意回避，" +
+                "但也不要为了难而难、堆砌生僻术语。"
+            rules += "篇幅 380–450 词，4–6 段。结构参考真题：" +
+                "开篇引入话题并亮明观点 → 中间分论点配例证、数据或研究 → 结尾收束观点。"
+            rules += "至少写 4 个长难句，包含从句、插入语、分词结构或倒装 —— 长难句正是考研阅读的主要难点。"
+            rules += "语气书面、客观，可以含蓄地表达作者态度（surprisingly / unfortunately / arguably 这类词），" +
+                "不必直白点破。"
+        } else {
+            rules += "词汇主要用学生已掌握的词和最常用的 2000 个英语基础词，不要用生僻词。"
+            rules += "句子长短交错，读起来自然顺畅。"
+        }
+        rules += "只输出 JSON，不要输出任何解释文字。"
+
+        val head = listOf(
+            "你是一位英语教学文章作者，为一位正在准备中国考研英语的学生写英文短文。",
             "",
             "【必须自然使用的目标词】(每个至少出现一次)",
             target,
             "",
-            "【学生已掌握的背景词汇】(尽量只用这些词和它们之外的常见基础词)",
+            "【学生已掌握的背景词汇】",
             known,
             "",
             "要求：",
-            "1. 只使用目标词、背景词汇表里的词，以及最常用的 2000 个英语基础词；严禁使用明显超纲的生僻词。",
-            "2. 目标词要自然地融入上下文，不要生硬堆砌，不要写成词语接龙。",
-            "3. 篇幅 3–5 段，每段 2–4 句，难度适合考研阅读水平。",
-            "4. 风格：" + style.label + "（可选：日记 / 小故事 / 科普短文 / 对话）",
-            "5. 目标词可以按语法需要使用时态或复数变化，不必强用原形。",
-            "6. 只输出 JSON，不要输出任何解释文字。",
+        )
+        val body = rules.mapIndexed { index, rule -> (index + 1).toString() + ". " + rule }
+        val tail = listOf(
             "",
             "输出 JSON 结构：",
             "{",
@@ -136,7 +161,8 @@ class ArticleGenerator @Inject constructor(
             "  \"translation\": [\"第一段中文翻译\", \"...\"]",
             "}",
             "occurrences 里必须列出所有目标词在文中出现的实际形态，用于客户端高亮和点击查词。",
-        ).joinToString("\n")
+        )
+        return (head + body + tail).joinToString("\n")
     }
 
     /** 便于调试：把 JSON 序列化回来 */

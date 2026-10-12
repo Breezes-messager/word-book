@@ -36,7 +36,7 @@ class TabNavigationTest {
             composable(Routes.ARTICLE) { }
             composable(Routes.STATS) { }
             composable(Routes.SETTINGS) { }
-            composable(Routes.WORDS) { }
+            composable(Routes.SEARCH) { }
         }
         controller.setGraph(graph, null)
         return controller
@@ -107,8 +107,9 @@ class TabNavigationTest {
     @Test
     fun `学习页这种压栈页面返回后仍然回到首页`() {
         val nav = newController()
-        nav.navigate(Routes.WORDS)
-        assertEquals(Routes.WORDS, nav.route())
+        // 用「搜索」当压栈页面的代表（原来是词库页，词库预览删掉后那个页面也没有入口了）
+        nav.navigate(Routes.SEARCH)
+        assertEquals(Routes.SEARCH, nav.route())
         assertTrue(nav.popBackStack())
         assertEquals(Routes.HOME, nav.route())
         // 再从首页切 tab 也没问题
